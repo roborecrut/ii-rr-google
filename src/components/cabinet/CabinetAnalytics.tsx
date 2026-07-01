@@ -1,0 +1,285 @@
+import React, { useState } from 'react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, Legend, Cell } from 'recharts';
+import { Sparkles, BarChart3, TrendingUp, AlertTriangle, Users, BookOpen, Volume2, Calendar, Award, RefreshCw } from 'lucide-react';
+import { SubmittedReport, Department } from '../../types';
+
+interface CabinetAnalyticsProps {
+  reports: SubmittedReport[];
+  departments: Department[];
+  triggerAI: (prompt: string, sys: string, cb: (text: string) => void, mascot?: any) => void;
+}
+
+export default function CabinetAnalytics({
+  reports,
+  departments,
+  triggerAI
+}: CabinetAnalyticsProps) {
+  const [selectedAnalDept, setSelectedAnalDept] = useState('All');
+  const [aiSummaryResult, setAiSummaryResult] = useState('');
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+
+  // Filter reports according to selected department
+  const filteredReports = reports.filter(r => {
+    if (selectedAnalDept !== 'All' && r.departmentId !== selectedAnalDept) return false;
+    return true;
+  });
+
+  // Calculate Metrics
+  const totalReportsCount = filteredReports.length;
+  const avgQualityScore = totalReportsCount > 0 
+    ? Math.round(filteredReports.reduce((sum, r) => sum + r.qualityScore, 0) / totalReportsCount)
+    : 0;
+
+  const voiceReportsCount = filteredReports.filter(r => r.voiceInputUsed).length;
+  const voiceRate = totalReportsCount > 0 
+    ? Math.round((voiceReportsCount / totalReportsCount) * 100)
+    : 0;
+
+  // Timeliness simulation: 90+ score or high scores are counted as "excellent timing"
+  const excellentCount = filteredReports.filter(r => r.qualityScore >= 80).length;
+  const excellentRate = totalReportsCount > 0 
+    ? Math.round((excellentCount / totalReportsCount) * 100)
+    : 0;
+
+  // Prepare Trend Data (by timestamp date)
+  const getTrendData = () => {
+    const datesMap: Record<string, { count: number; totalScore: number }> = {};
+    
+    // Default mock week if no reports to ensure beautiful render
+    if (filteredReports.length === 0) {
+      return [
+        { date: '25.06', score: 82 },
+        { date: '26.06', score: 85 },
+        { date: '27.06', score: 79 },
+        { date: '28.06', score: 88 },
+        { date: '29.06', score: 91 },
+        { date: '30.06', score: 89 },
+        { date: '01.07', score: 94 },
+      ];
+    }
+
+    filteredReports.forEach(r => {
+      const dateStr = new Date(r.timestamp).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+      if (!datesMap[dateStr]) {
+        datesMap[dateStr] = { count: 0, totalScore: 0 };
+      }
+      datesMap[dateStr].count += 1;
+      datesMap[dateStr].totalScore += r.qualityScore;
+    });
+
+    return Object.keys(datesMap).map(date => ({
+      date,
+      score: Math.round(datesMap[date].totalScore / datesMap[date].count)
+    })).reverse(); // chronological order
+  };
+
+  const trendData = getTrendData();
+
+  // Prepare Department distribution data
+  const getDeptData = () => {
+    return departments.map(d => {
+      const deptCount = reports.filter(r => r.departmentId === d.id).length;
+      return {
+        name: d.name,
+        count: deptCount
+      };
+    });
+  };
+
+  const deptData = getDeptData();
+
+  const handleGenerateSummary = () => {
+    setIsSummaryLoading(true);
+    
+    const sysPrompt = `Ты — профессиональный финансовый и операционный аудитор компании. Твоя задача — составить глубокий, конструктивный аналитический SWOT-отчет по результатам рапортов сотрудников на русском языке. Ответ должен быть бодрым, вдохновляющим и четко структурированным.`;
+    
+    const promptText = `Проанализируй сводный набор последних отчетов сотрудников нашей компании за последние 3 дня.
+ОТДЕЛЫ: ${departments.map(d => d.name).join(', ')}
+СПИСОК ПОСЛЕДНИХ ОТЧЕТОВ И ИХ КАЧЕСТВО:
+${reports.slice(0, 10).map(r => `- Сотрудник: ${r.employeeName}, Отдел: ${r.departmentName}, Шаблон: ${r.templateTitle}, Балл: ${r.qualityScore}/100, Краткий факт: ${r.aiSummary || 'В норме.'}`).join('\n')}
+
+Пожалуйста, составь красивый, развернутый аналитический отчет (Саммари ИИ) в 3 логических разделах:
+1. 📈 Ключевые результаты и тенденции организации.
+2. 🔍 Проблемные зоны, инциденты или упущенные возможности.
+3. 🎯 3 Сильнейших инсайта / рекомендации от ИИ для руководства по оптимизации работы отделов.
+
+Ответ напиши в деловом тоне, используя красивое форматирование.`;
+
+    triggerAI(promptText, sysPrompt, (text) => {
+      setAiSummaryResult(text);
+      setIsSummaryLoading(false);
+    }, 'happy');
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in" id="panel-analytics">
+      <div>
+        <h3 className="text-xl font-bold text-white font-sans flex items-center gap-2">
+          <BarChart3 className="text-amber-200" size={20} />
+          <span>ИИ Аналитика и Саммари</span>
+        </h3>
+        <p className="text-xs text-slate-400">Сводный интерактивный пульт управления показателями и ИИ-анализ эффективности сотрудников.</p>
+      </div>
+
+      {/* KPI Bento Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-sans">
+        <div className="p-4 rounded-2xl bg-[#17344F]/40 border border-white/5 flex items-center gap-4 shadow-md">
+          <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-400/20 text-blue-400">
+            <BookOpen size={18} />
+          </div>
+          <div>
+            <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Всего отчетов</span>
+            <span className="text-xl font-extrabold font-mono text-white">{totalReportsCount}</span>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-[#17344F]/40 border border-white/5 flex items-center gap-4 shadow-md">
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-400/20 text-emerald-400">
+            <Award size={18} />
+          </div>
+          <div>
+            <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Ср. Оценка ИИ</span>
+            <span className="text-xl font-extrabold font-mono text-emerald-400">{avgQualityScore}/100</span>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-[#17344F]/40 border border-white/5 flex items-center gap-4 shadow-md">
+          <div className="p-3 rounded-xl bg-amber-400/10 border border-amber-300/20 text-amber-300">
+            <Volume2 size={18} />
+          </div>
+          <div>
+            <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Голосовых рапортов</span>
+            <span className="text-xl font-extrabold font-mono text-amber-300">{voiceRate}%</span>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-[#17344F]/40 border border-white/5 flex items-center gap-4 shadow-md">
+          <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-400/20 text-indigo-400">
+            <TrendingUp size={18} />
+          </div>
+          <div>
+            <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Уровень качества</span>
+            <span className="text-xl font-extrabold font-mono text-indigo-300">{excellentRate}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Recharts Graphical Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 font-sans">
+        
+        {/* Trend area chart */}
+        <div className="p-4 sm:p-5 rounded-3xl border border-white/10 bg-[#17344F]/40 shadow-xl space-y-4">
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+            <TrendingUp size={14} className="text-emerald-400" />
+            Тренды качества работы (Динамика KPI)
+          </h4>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="scoreColor" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={10} domain={[60, 100]} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#17344F', borderColor: '#334155', borderRadius: '12px' }}
+                  labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
+                />
+                <Area type="monotone" dataKey="score" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#scoreColor)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Department workload bar chart */}
+        <div className="p-4 sm:p-5 rounded-3xl border border-white/10 bg-[#17344F]/40 shadow-xl space-y-4">
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+            <Users size={14} className="text-[#E7C768]" />
+            Активность по отделам (Количество рапортов)
+          </h4>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={deptData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={10} allowDecimals={false} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#17344F', borderColor: '#334155', borderRadius: '12px' }}
+                  labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
+                />
+                <Bar dataKey="count" fill="#E7C768" radius={[8, 8, 0, 0]}>
+                  {deptData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#E7C768' : '#F4EE8E'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* AI SWOT Summary Generator */}
+      <div className="p-5 rounded-3xl border border-white/10 bg-[#17344F]/40 space-y-4" id="ai-swot-generator">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold text-white font-sans flex items-center gap-1.5">
+              <Sparkles size={16} className="text-amber-200" />
+              Комплексный ИИ-анализ эффективности за 3 дня
+            </h4>
+            <p className="text-xs text-slate-400">Нейросеть соберет все поданные сотрудниками рапорты, выявит точки роста и создаст SWOT-сводку.</p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <select 
+              value={selectedAnalDept}
+              onChange={(e) => setSelectedAnalDept(e.target.value)}
+              className="px-3 py-2 rounded-xl bg-[#1E4468]/60 border border-white/10 text-slate-300 text-xs focus:outline-none h-10"
+            >
+              <option value="All">Все отделы</option>
+              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+
+            <button
+              onClick={handleGenerateSummary}
+              disabled={isSummaryLoading}
+              className="px-5 py-2.5 rounded-xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-xs uppercase tracking-wider hover:brightness-110 disabled:opacity-50 transition-all cursor-pointer flex items-center gap-1.5 font-sans h-10 shadow-lg active:scale-95"
+            >
+              {isSummaryLoading ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Формируем ИИ сводку...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} />
+                  <span>Создать ИИ-Сводку</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* AI summary text display block */}
+        {aiSummaryResult ? (
+          <div className="p-5 rounded-2xl bg-[#1E4468]/20 border border-amber-200/20 text-slate-100 text-xs sm:text-sm leading-relaxed whitespace-pre-line animate-fade-in font-sans" id="ai-summary-output">
+            <div className="flex justify-between items-center pb-2.5 border-b border-white/5 mb-3">
+              <h5 className="font-extrabold text-[#F4EE8E] uppercase tracking-wide flex items-center gap-1.5 text-xs">
+                🤖 СВОДНЫЙ АУДИТ НЕЙРОСЕТИ ii_rr:
+              </h5>
+              <span className="text-[10px] text-slate-400">Сгенерировано ИИ в реальном времени</span>
+            </div>
+            <div className="text-slate-200 text-xs leading-relaxed space-y-4">
+              {aiSummaryResult}
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 text-center border border-dashed border-white/5 rounded-2xl bg-white/1 text-slate-500 text-xs font-sans">
+            Нажмите кнопку «Создать ИИ-Сводку» для мгновенного аудита организации.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,6 @@
+{
+  "name": "ИИ Рапорт",
+  "description": "Система отчетности для сотрудников отделов с искусственным интеллектом, помогающим заполнять отчеты текстом или голосом и предоставляющим индивидуальные рекомендации.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
