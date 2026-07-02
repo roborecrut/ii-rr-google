@@ -74,6 +74,7 @@ export interface SubmittedReport {
   managerTask?: string;
   managerReaction?: string;
   fieldComments?: Record<string, string>;
+  isReviewedByManager?: boolean;
 }
 
 export type ScheduleTemplate = '5_2' | '2_2' | '6_1' | 'SHIFTS';

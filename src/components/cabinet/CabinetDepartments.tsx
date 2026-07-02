@@ -249,12 +249,13 @@ export default function CabinetDepartments({
     const newX = Math.max(20, Math.min(e.clientX - canvasBounds.left - dragStartOffset.x, 1050));
     const newY = Math.max(20, Math.min(e.clientY - canvasBounds.top - dragStartOffset.y, 650));
 
-    setDepartments(prev => prev.map(d => {
+    const updated = departments.map(d => {
       if (d.id === draggedDeptId) {
         return { ...d, x: newX, y: newY };
       }
       return d;
-    }));
+    });
+    setDepartments(updated);
   };
 
   // Drag release
