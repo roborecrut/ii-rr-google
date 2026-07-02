@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Shield, Check, X, Mail, Sparkles, UserCheck } from 'lucide-react';
+import { User, Shield, Check, X, Mail, Sparkles, UserCheck, Plus, Trash2, BookOpen, Briefcase, Info, RefreshCw } from 'lucide-react';
 import { UserProfile, UserRole } from '../../types';
 
 interface CabinetEmployeesProps {
@@ -16,7 +16,57 @@ interface CabinetEmployeesProps {
   notifications: any;
   tariff: any;
   crmCompanies: any;
+  triggerAI?: (prompt: string, sys: string, cb: (text: string) => void, mascot?: any) => void;
 }
+
+// Role translation helper
+export function translateRole(role: string): string {
+  if (role === 'DIRECTOR') return 'Директор';
+  if (role === 'ADMIN') return 'Администратор';
+  if (role === 'MANAGER') return 'Руководитель';
+  if (role === 'EMPLOYEE') return 'Сотрудник';
+  return role;
+}
+
+// Job-specific duties templates for quick insertions
+const DUTIES_TEMPLATES = {
+  sales: {
+    title: 'Менеджер по продажам',
+    duties: [
+      'Обработка входящих холодных и теплых заявок в CRM',
+      'Проведение телефонных звонков и онлайн-презентаций',
+      'Выполнение дневных планов по объему продаж',
+      'Заполнение ежедневных ИИ-рапортов по клиентам'
+    ]
+  },
+  dev: {
+    title: 'Разработчик ПО',
+    duties: [
+      'Разработка модулей платформы и оптимизация запросов к БД',
+      'Покрытие написанного функционала юнит-тестами',
+      'Проведение code review коллег по команде',
+      'Сдача суточных отчетов о прогрессе в тикетах'
+    ]
+  },
+  marketing: {
+    title: 'Трафик-маркетолог',
+    duties: [
+      'Запуск и оптимизация рекламных кампаний в Яндексе и соцсетях',
+      'Мониторинг конверсий, расчет показателей CPL, CAC, ROMI',
+      'Создание маркетинговых креативов и промо-постов',
+      'Формирование еженедельного отчета по KPI по привлечению лидов'
+    ]
+  },
+  head: {
+    title: 'Руководитель отдела',
+    duties: [
+      'Управление рабочей нагрузкой и координация сотрудников',
+      'Контроль ежедневных рапортов сотрудников в Telegram-каналах',
+      'Настройка графиков смен в месячном календаре Ганта',
+      'Анализ эффективности работы команды через ИИ-аналитику'
+    ]
+  }
+};
 
 export default function CabinetEmployees({
   currentUser,
@@ -30,18 +80,33 @@ export default function CabinetEmployees({
   transactions,
   notifications,
   tariff,
-  crmCompanies
+  crmCompanies,
+  triggerAI
 }: CabinetEmployeesProps) {
   const [selectedEmp, setSelectedEmp] = useState<UserProfile | null>(null);
+
+  // Dynamic custom duties templates
+  const [customTemplates, setCustomTemplates] = useState<{title: string, duties: string[]}[]>(() => {
+    try {
+      const saved = localStorage.getItem('rr_custom_duty_templates');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [isAiGeneratingDuties, setIsAiGeneratingDuties] = useState(false);
 
   // Editing state
   const [editName, setEditName] = useState('');
   const [editRole, setEditRole] = useState<UserRole>(UserRole.EMPLOYEE);
   const [editPosition, setEditPosition] = useState('');
   const [editTelegram, setEditTelegram] = useState('');
+  const [editDuties, setEditDuties] = useState<string[]>([]);
+  const [newDutyInput, setNewDutyInput] = useState('');
 
+  // Open editor
   const handleOpenEdit = (emp: UserProfile) => {
-    // Only allow editing if currentUser is director or admin
     if (currentUser?.role !== UserRole.DIRECTOR && currentUser?.role !== UserRole.ADMIN && currentUser?.role !== UserRole.MANAGER) {
       alert('У вас нет прав для изменения карточек сотрудников.');
       return;
@@ -51,10 +116,101 @@ export default function CabinetEmployees({
     setEditRole(emp.role);
     setEditPosition(emp.position || '');
     setEditTelegram(emp.telegramHandle || '');
+    setEditDuties(emp.duties || []);
+    setNewDutyInput('');
   };
 
+  // Save current duties set as a custom position template
+  const handleSaveAsTemplate = () => {
+    if (!editPosition.trim()) {
+      alert('Укажите название должности, чтобы сохранить её как шаблон.');
+      return;
+    }
+    if (editDuties.length === 0) {
+      alert('Нельзя сохранить шаблон с пустым списком обязанностей.');
+      return;
+    }
+    const title = editPosition.trim();
+    const exists = customTemplates.some(t => t.title.toLowerCase() === title.toLowerCase());
+    if (exists) {
+      if (!confirm(`Шаблон для должности "${title}" уже существует. Перезаписать его?`)) {
+        return;
+      }
+    }
+    const filtered = customTemplates.filter(t => t.title.toLowerCase() !== title.toLowerCase());
+    const nextTemplates = [...filtered, { title, duties: [...editDuties] }];
+    setCustomTemplates(nextTemplates);
+    localStorage.setItem('rr_custom_duty_templates', JSON.stringify(nextTemplates));
+    alert(`Шаблон для должности "${title}" успешно сохранен! Теперь вы можете быстро применить его для других сотрудников.`);
+  };
+
+  // Generate duties with AI assistance
+  const handleAiGenerateDuties = () => {
+    if (!editPosition.trim()) {
+      alert('Пожалуйста, введите название должности в поле выше, чтобы ИИ понимал контекст генерации.');
+      return;
+    }
+    if (!triggerAI) {
+      alert('ИИ Ассистент временно недоступен.');
+      return;
+    }
+    setIsAiGeneratingDuties(true);
+    const prompt = `Сгенерируй профессиональный список из 4-5 ключевых должностных обязанностей для сотрудника на должности: "${editPosition.trim()}".
+Обязанности должны быть четкими, конкретными, реалистичными и на русском языке. Напиши каждую обязанность с новой строки БЕЗ цифр, точек и маркеров (просто чистый текст). Пример:
+Контроль выполнения планов продаж сотрудниками
+Оптимизация рекламного бюджета в рекламных кабинетах`;
+
+    triggerAI(
+      prompt,
+      "Ты — опытный HR-специалист и ИИ-помощник по управлению персоналом компании.",
+      (response) => {
+        setIsAiGeneratingDuties(false);
+        if (!response) return;
+        const lines = response
+          .split('\n')
+          .map(line => line.replace(/^[\s\d\.\-\*•]+/, '').trim())
+          .filter(line => line.length > 3);
+        if (lines.length > 0) {
+          setEditDuties(prev => Array.from(new Set([...prev, ...lines])));
+        }
+      }
+    );
+  };
+
+  // Quick insertion of duty templates
+  const handleApplyTemplate = (type: 'sales' | 'dev' | 'marketing' | 'head') => {
+    const selectedTemplate = DUTIES_TEMPLATES[type];
+    if (selectedTemplate) {
+      // Append unique duties
+      const combined = Array.from(new Set([...editDuties, ...selectedTemplate.duties]));
+      setEditDuties(combined);
+    }
+  };
+
+  // Add individual custom duty
+  const handleAddCustomDuty = () => {
+    if (!newDutyInput.trim()) return;
+    if (!editDuties.includes(newDutyInput.trim())) {
+      setEditDuties([...editDuties, newDutyInput.trim()]);
+    }
+    setNewDutyInput('');
+  };
+
+  // Remove individual duty
+  const handleRemoveDuty = (indexToRemove: number) => {
+    setEditDuties(editDuties.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  // Save changes
   const handleSaveEmp = () => {
     if (!selectedEmp) return;
+
+    // Validate telegram is numeric
+    if (editTelegram.trim() && !/^\-?\d+$/.test(editTelegram.trim()) && !editTelegram.startsWith('@')) {
+      if (!confirm('Внимание: Telegram ID обычно состоит только из цифр (например, 123456789). Вы уверены, что хотите сохранить нечисловое значение?')) {
+        return;
+      }
+    }
 
     const next = mockEmployees.map(e => {
       if (e.id === selectedEmp.id) {
@@ -63,7 +219,8 @@ export default function CabinetEmployees({
           name: editName,
           role: editRole,
           position: editPosition,
-          telegramHandle: editTelegram
+          telegramHandle: editTelegram,
+          duties: editDuties
         };
       }
       return e;
@@ -88,29 +245,59 @@ export default function CabinetEmployees({
   return (
     <div className="space-y-6 animate-fade-in" id="panel-employees">
       <div>
-        <h3 className="text-xl font-bold text-white font-sans">Сотрудники и роли</h3>
-        <p className="text-xs text-slate-400">Управляйте учетными записями, ролями и доступами сотрудников.</p>
+        <h3 className="text-xl font-bold text-white font-sans flex items-center gap-2">
+          <UserCheck className="text-amber-200" size={20} />
+          <span>Сотрудники, роли и должностные обязанности</span>
+        </h3>
+        <p className="text-xs text-slate-400">Управляйте учетными записями, должностями, системными ролями и персональными обязанностями персонала.</p>
       </div>
 
-      {/* Direct Invite link banner */}
-      <div className="p-4 rounded-2xl border border-sky-400/20 bg-sky-500/5 flex flex-col sm:flex-row items-center justify-between gap-4 font-sans">
-        <div className="space-y-1 text-center sm:text-left">
-          <span className="text-[10px] font-bold text-sky-300 uppercase tracking-widest font-mono">ИНДИВИДУАЛЬНАЯ ССЫЛКА ПРИГЛАШЕНИЯ СЛУЖАЩЕГО</span>
-          <p className="text-xs text-slate-300">Передайте эту специальную ссылку сотруднику для автоматического вступления в ваш корпоративный отдел.</p>
+      {/* Direct Invite links container */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans" id="invite-links-container">
+        {/* Employee Invite Link */}
+        <div className="p-4 rounded-2xl border border-sky-400/20 bg-sky-500/5 space-y-2.5">
+          <div className="flex justify-between items-center">
+            <span className="text-[9px] font-bold text-sky-300 uppercase tracking-widest font-mono">ССЫЛКА ДЛЯ СОТРУДНИКОВ</span>
+            <span className="text-[10px] bg-sky-400/10 text-sky-300 px-2 py-0.5 rounded-full font-bold">Сотрудник</span>
+          </div>
+          <p className="text-xs text-slate-300">Передайте эту специальную ссылку сотруднику для автоматического вступления и назначения базовой роли.</p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 px-2.5 py-1.5 rounded bg-[#17344F]/50 border border-white/10 text-[9px] text-[#F4EE8E] font-mono truncate select-all">
+              https://ii-rr.online/invite?org=rr-1552&role=employee
+            </code>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(`https://ii-rr.online/invite?org=rr-1552&role=employee`);
+                alert('Индивидуальная ссылка для сотрудников скопирована!');
+              }}
+              className="px-3.5 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-[10px] cursor-pointer transition-all active:scale-95 shrink-0"
+            >
+              Скопировать
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <code className="px-3 py-1.5 rounded bg-[#17344F]/50 border border-white/10 text-[10px] text-[#F4EE8E] font-mono select-all">
-            {window.location.origin}/invite?org=rr-1552
-          </code>
-          <button 
-            onClick={() => {
-              navigator.clipboard.writeText(`${window.location.origin}/invite?org=rr-1552`);
-              alert('Ссылка для сотрудников скопирована!');
-            }}
-            className="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-[10px] cursor-pointer transition-all"
-          >
-            Скопировать
-          </button>
+
+        {/* Manager/Leader Invite Link */}
+        <div className="p-4 rounded-2xl border border-amber-400/20 bg-amber-500/5 space-y-2.5">
+          <div className="flex justify-between items-center">
+            <span className="text-[9px] font-bold text-amber-300 uppercase tracking-widest font-mono">ССЫЛКА ДЛЯ РУКОВОДИТЕЛЕЙ</span>
+            <span className="text-[10px] bg-amber-400/10 text-amber-300 px-2 py-0.5 rounded-full font-bold">Руководитель</span>
+          </div>
+          <p className="text-xs text-slate-300">Приглашение для начальников департаментов и руководителей с расширенным доступом к верификации отчетов.</p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 px-2.5 py-1.5 rounded bg-[#17344F]/50 border border-white/10 text-[9px] text-[#F4EE8E] font-mono truncate select-all">
+              https://ii-rr.online/invite?org=rr-1552&role=manager
+            </code>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(`https://ii-rr.online/invite?org=rr-1552&role=manager`);
+                alert('Индивидуальная ссылка для руководителей скопирована!');
+              }}
+              className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-[10px] cursor-pointer transition-all active:scale-95 shrink-0"
+            >
+              Скопировать
+            </button>
+          </div>
         </div>
       </div>
 
@@ -124,7 +311,8 @@ export default function CabinetEmployees({
                 <th className="py-2 px-3">ФИО сотрудника</th>
                 <th className="py-2 px-3">Системная Роль</th>
                 <th className="py-2 px-3">Должность в компании</th>
-                <th className="py-2 px-3">Учетная запись Telegram</th>
+                <th className="py-2 px-3">Telegram ID (числовой)</th>
+                <th className="py-2 px-3">Кол-во обязанностей</th>
                 <th className="py-2 px-3 text-right">Действие</th>
               </tr>
             </thead>
@@ -144,11 +332,12 @@ export default function CabinetEmployees({
                       emp.role === UserRole.MANAGER ? 'bg-amber-500/20 text-amber-300 border border-amber-500/10' :
                       'bg-emerald-500/20 text-emerald-300 border border-emerald-500/10'
                     }`}>
-                      {emp.role}
+                      {translateRole(emp.role)}
                     </span>
                   </td>
                   <td className="py-3 px-3 font-sans text-slate-300">{emp.position || '—'}</td>
-                  <td className="py-3 px-3 text-sky-300">{emp.telegramHandle || '—'}</td>
+                  <td className="py-3 px-3 text-sky-300 font-mono">{emp.telegramHandle || '—'}</td>
+                  <td className="py-3 px-3 text-center text-slate-400 font-sans">{(emp.duties || []).length}</td>
                   <td className="py-3 px-3 text-right font-sans">
                     <span className="text-[#E7C768] hover:underline font-bold text-[10px]">Редактировать →</span>
                   </td>
@@ -162,13 +351,13 @@ export default function CabinetEmployees({
       {/* EDIT EMPLOYEE DETAIL CARD MODAL */}
       {selectedEmp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#17344F]/85 backdrop-blur-md animate-fade-in" id="employee-edit-modal">
-          <div className="relative w-full max-w-md border border-amber-200/20 bg-gradient-to-b from-[#17344F] to-[#265582] rounded-3xl p-6 sm:p-8 text-white shadow-2xl overflow-hidden font-sans">
+          <div className="relative w-full max-w-lg border border-amber-200/20 bg-gradient-to-b from-[#17344F] to-[#265582] rounded-3xl p-6 sm:p-8 text-white shadow-2xl overflow-y-auto max-h-[90vh] font-sans space-y-5">
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 to-white/5" />
             
-            <div className="flex justify-between items-start border-b border-white/10 pb-4 mb-4">
+            <div className="flex justify-between items-start border-b border-white/10 pb-4 shrink-0">
               <div className="flex items-center gap-2">
                 <UserCheck className="text-amber-200" size={18} />
-                <h4 className="text-sm font-bold text-[#F4EE8E]">Личная карточка #{selectedEmp.id}</h4>
+                <h4 className="text-sm font-bold text-[#F4EE8E]">Редактор сотрудника #{selectedEmp.id}</h4>
               </div>
               <button 
                 onClick={() => setSelectedEmp(null)}
@@ -178,67 +367,204 @@ export default function CabinetEmployees({
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">ФИО Сотрудника *</label>
-                <input 
-                  type="text"
-                  required
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#17344F]/60 border border-white/10 text-white text-xs focus:outline-none focus:border-[#E7C768]"
-                />
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">ФИО Сотрудника *</label>
+                  <input 
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-[#17344F]/60 border border-white/10 text-white text-xs focus:outline-none focus:border-[#E7C768]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Системная Роль *</label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as UserRole)}
+                    className="w-full px-3 py-2 rounded-xl bg-[#17344F]/60 border border-white/10 text-white text-xs focus:outline-none focus:border-[#E7C768] h-9"
+                  >
+                    <option value={UserRole.EMPLOYEE}>👨‍💻 {translateRole(UserRole.EMPLOYEE)} (EMPLOYEE)</option>
+                    <option value={UserRole.MANAGER}>👔 {translateRole(UserRole.MANAGER)} (MANAGER)</option>
+                    <option value={UserRole.DIRECTOR}>👑 {translateRole(UserRole.DIRECTOR)} (DIRECTOR)</option>
+                    <option value={UserRole.ADMIN}>🛡️ {translateRole(UserRole.ADMIN)} (ADMIN)</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">E-mail (Только чтение)</label>
-                <input 
-                  type="text"
-                  disabled
-                  value={selectedEmp.email}
-                  className="w-full px-3 py-2 rounded-xl bg-[#17344F]/30 border border-white/5 text-slate-400 text-xs font-mono select-none"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Должность в компании *</label>
+                  <input 
+                    type="text"
+                    required
+                    value={editPosition}
+                    onChange={(e) => setEditPosition(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-[#17344F]/60 border border-white/10 text-white text-xs focus:outline-none focus:border-[#E7C768]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">ID Telegram (числовой) *</label>
+                  <input 
+                    type="text"
+                    required
+                    value={editTelegram}
+                    onChange={(e) => setEditTelegram(e.target.value)}
+                    placeholder="Например: 8598472380"
+                    className="w-full px-3 py-2 rounded-xl bg-[#17344F]/60 border border-white/10 text-white text-xs focus:outline-none focus:border-[#E7C768] font-mono"
+                  />
+                  <span className="text-[9px] text-slate-400 block mt-0.5">Укажите числовой ID для персональных ИИ-оповещений.</span>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Системная Роль *</label>
-                <select
-                  value={editRole}
-                  onChange={(e) => setEditRole(e.target.value as UserRole)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#17344F]/60 border border-white/10 text-white text-xs focus:outline-none focus:border-[#E7C768]"
-                >
-                  <option value={UserRole.EMPLOYEE}>👨‍💻 EMPLOYEE (Сотрудник)</option>
-                  <option value={UserRole.MANAGER}>👔 MANAGER (Руководитель)</option>
-                  <option value={UserRole.DIRECTOR}>👑 DIRECTOR (Директор)</option>
-                  <option value={UserRole.ADMIN}>🛡️ ADMIN (Администратор)</option>
-                </select>
-              </div>
+              {/* SECTION: DUTIES & POSITION TEMPLATES */}
+              <div className="border-t border-white/5 pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-[11px] font-bold uppercase text-amber-200 tracking-wider flex items-center gap-1">
+                    <BookOpen size={12} />
+                    <span>Должностные обязанности сотрудника</span>
+                  </h5>
+                  <span className="text-[10px] text-slate-400">Всего: {editDuties.length}</span>
+                </div>
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Должность в компании *</label>
-                <input 
-                  type="text"
-                  required
-                  value={editPosition}
-                  onChange={(e) => setEditPosition(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#17344F]/60 border border-white/10 text-white text-xs focus:outline-none focus:border-[#E7C768]"
-                />
-              </div>
+                {/* Duty Templates quick insertions */}
+                <div className="bg-[#17344F]/40 p-3 rounded-xl border border-white/5 space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide block">Шаблоны обязанностей по должностям:</span>
+                    <button
+                      type="button"
+                      onClick={handleSaveAsTemplate}
+                      className="px-2 py-0.5 rounded border border-amber-200/20 hover:border-amber-200/50 hover:bg-amber-400/10 text-[9px] text-[#F4EE8E] transition-colors cursor-pointer"
+                    >
+                      💾 Сохранить как шаблон
+                    </button>
+                  </div>
+                  
+                  {/* Default presets */}
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleApplyTemplate('sales')}
+                      className="px-2 py-1 rounded bg-[#1E4468] hover:bg-amber-300 hover:text-slate-900 transition-colors text-[9px] font-medium cursor-pointer"
+                    >
+                      + Отдел продаж
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyTemplate('dev')}
+                      className="px-2 py-1 rounded bg-[#1E4468] hover:bg-amber-300 hover:text-slate-900 transition-colors text-[9px] font-medium cursor-pointer"
+                    >
+                      + Разработчик
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyTemplate('marketing')}
+                      className="px-2 py-1 rounded bg-[#1E4468] hover:bg-amber-300 hover:text-slate-900 transition-colors text-[9px] font-medium cursor-pointer"
+                    >
+                      + Маркетолог
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyTemplate('head')}
+                      className="px-2 py-1 rounded bg-[#1E4468] hover:bg-amber-300 hover:text-slate-900 transition-colors text-[9px] font-medium cursor-pointer"
+                    >
+                      + Руководитель
+                    </button>
+                  </div>
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Telegram логин *</label>
-                <input 
-                  type="text"
-                  required
-                  value={editTelegram}
-                  onChange={(e) => setEditTelegram(e.target.value)}
-                  placeholder="@telegram_nick"
-                  className="w-full px-3 py-2 rounded-xl bg-[#17344F]/60 border border-white/10 text-white text-xs focus:outline-none focus:border-[#E7C768]"
-                />
+                  {/* Custom templates list */}
+                  {customTemplates.length > 0 && (
+                    <div className="space-y-1.5 pt-1.5 border-t border-white/5">
+                      <span className="text-[8px] text-slate-400 uppercase block font-semibold">Ваши сохраненные шаблоны:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {customTemplates.map((tpl, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              const combined = Array.from(new Set([...editDuties, ...tpl.duties]));
+                              setEditDuties(combined);
+                            }}
+                            className="px-2 py-1 rounded bg-amber-400/10 hover:bg-amber-400 text-amber-200 hover:text-slate-900 border border-amber-400/20 transition-colors text-[9px] font-semibold cursor-pointer"
+                          >
+                            + {tpl.title}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI assist button */}
+                  <div className="pt-2 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={handleAiGenerateDuties}
+                      disabled={isAiGeneratingDuties}
+                      className="w-full py-1.5 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-indigo-400/30 hover:brightness-110 disabled:opacity-50 text-indigo-200 hover:text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                    >
+                      {isAiGeneratingDuties ? (
+                        <>
+                          <RefreshCw size={11} className="animate-spin" />
+                          <span>Генерируем обязанности ИИ...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={11} className="text-purple-300" />
+                          <span>Помощь нейросети ii_rr в заполнении обязанностей</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Custom duty input bar */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newDutyInput}
+                    onChange={(e) => setNewDutyInput(e.target.value)}
+                    placeholder="Введите отдельную обязанность вручную..."
+                    className="flex-1 px-3 py-1.5 rounded-lg bg-slate-950/30 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomDuty}
+                    className="px-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-lg text-xs flex items-center justify-center cursor-pointer"
+                  >
+                    Добавить
+                  </button>
+                </div>
+
+                {/* Duties list render */}
+                <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                  {editDuties.length === 0 ? (
+                    <div className="p-3 text-center border border-dashed border-white/10 rounded-xl text-slate-400 text-[10px]">
+                      Обязанности еще не назначены. Введите обязанность вручную или воспользуйтесь шаблонами быстрого ввода выше.
+                    </div>
+                  ) : (
+                    editDuties.map((duty, index) => (
+                      <div key={index} className="p-2 rounded-lg bg-slate-900/40 border border-white/5 flex items-start justify-between gap-2">
+                        <span className="text-[10px] text-slate-300 leading-normal">{duty}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDuty(index)}
+                          className="text-slate-500 hover:text-red-400 transition-colors p-0.5 shrink-0"
+                          title="Удалить обязанность"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="border-t border-white/10 pt-4 mt-6 flex justify-end gap-2">
+            <div className="border-t border-white/10 pt-4 shrink-0 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setSelectedEmp(null)}

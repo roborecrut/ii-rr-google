@@ -20,6 +20,10 @@ import CabinetFillReport from '../components/cabinet/CabinetFillReport';
 import CabinetCalendar from '../components/cabinet/CabinetCalendar';
 import CabinetScheduleGantt from '../components/cabinet/CabinetScheduleGantt';
 import CabinetAnalytics from '../components/cabinet/CabinetAnalytics';
+import CabinetNotifications from '../components/cabinet/CabinetNotifications';
+import CabinetTariff from '../components/cabinet/CabinetTariff';
+import CabinetSettings from '../components/cabinet/CabinetSettings';
+import CabinetCRM from '../components/cabinet/CabinetCRM';
 
 interface CabinetPageProps {
   currentPath: string;
@@ -150,10 +154,11 @@ export default function CabinetPage({
 
   // CRM Data (Admins Only)
   const [crmCompanies, setCrmCompanies] = useState<any[]>([
-    { id: 'crm-c1', name: 'ООО «РентРоп Системы»', departmentsCount: 3, employeesCount: 4, status: 'Активен (Бизнес)', referrals: 2, balance: 3550 },
-    { id: 'crm-c2', name: 'ООО «ТехноСофт»', departmentsCount: 2, employeesCount: 12, status: 'Триал (5 дней)', referrals: 0, balance: 0 },
-    { id: 'crm-c3', name: 'ИП Воробьев А.П.', departmentsCount: 1, employeesCount: 2, status: 'Завершен', referrals: 1, balance: 120 }
+    { id: 'crm-c1', name: 'ООО «РентРоп Системы»', departmentsCount: 3, employeesCount: 4, status: 'Активен (Бизнес)', referrals: 2, balance: 3550, inn: '7714285910', address: 'г. Москва, Пресненская наб. 12', email: 'rentrop@systems.ru' },
+    { id: 'crm-c2', name: 'ООО «ТехноСофт»', departmentsCount: 2, employeesCount: 12, status: 'Триал (5 дней)', referrals: 0, balance: 0, inn: '7805194830', address: 'г. Санкт-Петербург, Московский пр. 45', email: 'tech@soft-it.ru' },
+    { id: 'crm-c3', name: 'ИП Воробьев А.П.', departmentsCount: 1, employeesCount: 2, status: 'Завершен', referrals: 1, balance: 120, inn: '503294810234', address: 'г. Одинцово, ул. Парковая 8', email: 'vorobiev@mail.ru' }
   ]);
+  const [editingCrmCompany, setEditingCrmCompany] = useState<any | null>(null);
 
   // AI Overlay status
   const [isAiActive, setIsAiActive] = useState(false);
@@ -188,7 +193,8 @@ export default function CabinetPage({
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
-    onNavigate(`/cabinet/${currentUser?.role || 'user'}/${tab}`);
+    const userSlug = currentUser ? (currentUser.email.split('@')[0] || 'user') : 'user';
+    onNavigate(`/cabinet/${userSlug}/${tab}`);
   };
 
   // Load state from backend on mount
@@ -254,7 +260,7 @@ export default function CabinetPage({
     fetch('/api/ai/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: promptText, systemPrompt: sysPrompt })
+      body: JSON.stringify({ prompt: promptText, systemPrompt: sysPrompt, userId: currentUser?.id })
     })
       .then((res) => {
         if (!res.ok) throw new Error('API Error');
@@ -747,6 +753,7 @@ export default function CabinetPage({
               notifications={notifications}
               tariff={tariff}
               crmCompanies={crmCompanies}
+              triggerAI={triggerAI}
             />
           )}
 
@@ -832,255 +839,69 @@ export default function CabinetPage({
               reports={reports}
               departments={departments}
               triggerAI={triggerAI}
+              mockEmployees={mockEmployees}
             />
           )}
 
           {/* Tab 10: NOTIFICATIONS */}
           {activeTab === 'notifications' && (
-            <div className="space-y-6 animate-fade-in" id="panel-notifications">
-              <div className="flex justify-between items-center pb-2.5 border-b border-white/5">
-                <h3 className="text-xl font-bold text-white font-sans">Уведомления и Напоминания</h3>
-                <button 
-                  onClick={handleMarkAllNotificationsRead}
-                  className="px-3 py-1.5 rounded-lg bg-[#1E4468] hover:bg-[#1E4468]/80 text-xs font-semibold border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
-                >
-                  Отметить все прочитанными
-                </button>
-              </div>
-              
-              <div className="space-y-3" id="notifications-list">
-                {notifications.length > 0 ? (
-                  notifications.map((notif) => (
-                    <div 
-                      key={notif.id} 
-                      className={`p-4 rounded-2xl border flex items-start gap-3.5 relative overflow-hidden transition-all ${
-                        notif.type === 'RECOMMENDATION' 
-                          ? 'bg-amber-400/5 border-amber-200/15' 
-                          : 'bg-[#17344F]/40 border-white/5'
-                      }`}
-                    >
-                      <div className="p-2 rounded-xl bg-[#17344F]/50 text-amber-200">
-                        <Sparkles size={14} />
-                      </div>
-                      <div className="space-y-1 flex-1">
-                        <div className="flex justify-between items-center gap-2">
-                          <h4 className="text-xs font-bold text-white">{notif.title}</h4>
-                          <span className="text-[9px] text-slate-500 font-mono">{notif.timestamp}</span>
-                        </div>
-                        <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-line">{notif.message}</p>
-                      </div>
-                      {!notif.isRead && (
-                        <span className="w-2 h-2 rounded-full bg-red-500 mt-2 block" />
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-12 rounded-3xl border border-white/5 bg-[#17344F]/10 text-slate-500 text-xs font-sans">
-                    Список пуст. Новых уведомлений нет.
-                  </div>
-                )}
-              </div>
-            </div>
+            <CabinetNotifications 
+              notifications={notifications}
+              handleMarkAllNotificationsRead={handleMarkAllNotificationsRead}
+            />
           )}
 
           {/* Tab 11: TARIFF */}
           {activeTab === 'tariff' && (
-            <div className="space-y-6 animate-fade-in" id="panel-tariff">
-              <h3 className="text-xl font-bold text-white font-sans">Управление тарифом</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                <div className="p-4 bg-[#17344F]/40 rounded-2xl border border-white/5">
-                  <span className="text-[9px] text-slate-400 uppercase tracking-wider">Куплено сотрудников</span>
-                  <p className="text-2xl font-black text-[#F4EE8E] font-sans mt-1">{tariff.activeEmployeesCount} чел.</p>
-                </div>
-                <div className="p-4 bg-[#17344F]/40 rounded-2xl border border-white/5">
-                  <span className="text-[9px] text-slate-400 uppercase tracking-wider">Оплачен до</span>
-                  <p className="text-base font-bold text-white mt-1.5">{tariff.expiresAt} 18:00</p>
-                </div>
-                <div className="p-4 bg-[#17344F]/40 rounded-2xl border border-white/5">
-                  <span className="text-[9px] text-slate-400 uppercase tracking-wider">Баланс ЛК</span>
-                  <p className="text-2xl font-black text-emerald-400 font-sans mt-1">{tariff.balance} ₽</p>
-                </div>
-              </div>
-
-              {/* Top up container */}
-              <div className="p-5 rounded-2xl border border-white/5 bg-[#17344F]/40 space-y-4">
-                <h4 className="text-sm font-semibold text-white">Докупить места сотрудников</h4>
-                <div className="flex flex-col sm:flex-row gap-3 items-end">
-                  <div className="flex-1">
-                    <label className="block text-[10px] text-slate-400 mb-1">Количество мест (+290 ₽ / чел в мес)</label>
-                    <input 
-                      type="number" 
-                      min="1" 
-                      value={topUpSeats}
-                      onChange={(e) => setTopUpSeats(parseInt(e.target.value) || 1)}
-                      className="w-full px-3 py-2 rounded-xl bg-[#1E4468]/60 border border-white/10 text-white text-xs"
-                    />
-                  </div>
-                  <button
-                    onClick={handleTopUpTariff}
-                    className="px-6 py-2.5 rounded-xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-xs uppercase hover:brightness-110 cursor-pointer h-10"
-                  >
-                    Активировать за {(topUpSeats * 290)} ₽
-                  </button>
-                </div>
-
-                <div className="pt-2 flex justify-between items-center text-xs border-t border-white/5">
-                  <button 
-                    onClick={() => {
-                      if(tariff.activeEmployeesCount > 1) {
-                        const nextTariff = { ...tariff, activeEmployeesCount: tariff.activeEmployeesCount - 1 };
-                        setTariff(nextTariff);
-                        alert('Лимит сотрудников уменьшен на 1.');
-                        saveStateToServer({ company, departments, templates, reports, transactions, notifications, tariff: nextTariff, crmCompanies, mockEmployees });
-                      }
-                    }}
-                    className="text-slate-400 hover:text-slate-200 text-[10px] underline cursor-pointer"
-                  >
-                    Даунгрейд тарифа (уменьшить места)
-                  </button>
-
-                  <button 
-                    onClick={() => {
-                      setCashOutTab('bonus');
-                      setWithdrawalAmount(String(currentUser?.bonusesEarned || 2450));
-                      setIsCashOutModalOpen(true);
-                    }}
-                    className="text-amber-200 hover:text-amber-100 text-[11px] font-bold cursor-pointer flex items-center gap-1 bg-[#1E4468] px-3.5 py-1.5 rounded-xl border border-amber-200/20 active:scale-95 transition-all"
-                  >
-                    <Landmark size={12} />
-                    Вывод бонусов / Возврат
-                  </button>
-                </div>
-              </div>
-
-              {/* Transactions History */}
-              <div className="space-y-3 pt-2">
-                <h4 className="text-sm font-semibold text-white">История транзакций</h4>
-                <div className="bg-[#17344F]/40 rounded-2xl border border-white/5 p-4 space-y-2.5 font-mono text-[10px]">
-                  {transactions.map((tx) => (
-                    <div key={tx.id} className="flex justify-between items-center border-b border-white/5 pb-2">
-                      <div>
-                        <p className="text-slate-300 font-bold">{tx.description}</p>
-                        <p className="text-slate-500">{tx.date}</p>
-                      </div>
-                      <span className={`font-bold ${tx.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {tx.amount > 0 ? '+' : ''}{tx.amount} ₽
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <CabinetTariff 
+              tariff={tariff}
+              topUpSeats={topUpSeats}
+              setTopUpSeats={setTopUpSeats}
+              handleTopUpTariff={handleTopUpTariff}
+              setTariff={setTariff}
+              saveStateToServer={saveStateToServer}
+              currentUser={currentUser}
+              setCashOutTab={setCashOutTab}
+              setWithdrawalAmount={setWithdrawalAmount}
+              setIsCashOutModalOpen={setIsCashOutModalOpen}
+              transactions={transactions}
+              company={company}
+              departments={departments}
+              templates={templates}
+              reports={reports}
+              notifications={notifications}
+              crmCompanies={crmCompanies}
+              mockEmployees={mockEmployees}
+            />
           )}
 
           {/* Tab 12: SETTINGS (Directors only) */}
           {activeTab === 'settings' && (
-            <div className="space-y-6 animate-fade-in" id="panel-settings">
-              <h3 className="text-xl font-bold text-white font-sans">Параметры нейросети и шаблонов</h3>
-
-              <div className="p-5 rounded-2xl border border-white/5 bg-[#17344F]/40 space-y-4">
-                <div className="space-y-2">
-                  <label className="block text-xs text-slate-300 font-semibold">Базовый промпт для персональных рекомендаций сотруднику</label>
-                  <textarea 
-                    rows={3}
-                    value={promptRecs}
-                    onChange={(e) => setPromptRecs(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white text-xs focus:outline-none"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-xs text-slate-300 font-semibold">Базовый промпт для формирования сводного саммари руководству</label>
-                  <textarea 
-                    rows={3}
-                    value={promptSummary}
-                    onChange={(e) => setPromptSummary(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white text-xs focus:outline-none"
-                  />
-                </div>
-
-                <button
-                  onClick={() => alert('Настройки промптов нейросети сохранены!')}
-                  className="w-full py-2.5 rounded-xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-xs uppercase hover:brightness-110 cursor-pointer"
-                >
-                  Зафиксировать новые промпты
-                </button>
-              </div>
-            </div>
+            <CabinetSettings 
+              promptRecs={promptRecs}
+              setPromptRecs={setPromptRecs}
+              promptSummary={promptSummary}
+              setPromptSummary={setPromptSummary}
+            />
           )}
 
-          {/* Tab 13: CRM (Admin only) */}
+          {/* Tab 13: CRM (Admin only) - Interactive Kanban Board with Detailed Company Editor */}
           {activeTab === 'crm' && (
-            <div className="space-y-6 animate-fade-in" id="panel-crm">
-              <h3 className="text-xl font-bold text-white font-sans">CRM Панель глобального Администратора</h3>
-              <p className="text-xs text-slate-400">Прямое управление всеми клиентами, компаниями, реферальными связями и балансами в системе.</p>
-
-              <div className="p-5 rounded-2xl border border-white/5 bg-[#17344F]/40 overflow-x-auto">
-                <table className="w-full text-left text-xs font-mono">
-                  <thead>
-                    <tr className="border-b border-white/10 text-slate-400">
-                      <th className="py-2 px-3">ID Клиента</th>
-                      <th className="py-2 px-3">Организация</th>
-                      <th className="py-2 px-3">Отделов</th>
-                      <th className="py-2 px-3">Сотрудников</th>
-                      <th className="py-2 px-3">Тарифный статус</th>
-                      <th className="py-2 px-3">Баланс (₽)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5 text-slate-200 text-[11px]">
-                    {crmCompanies.map(comp => (
-                      <tr key={comp.id}>
-                        <td className="py-3 px-3">#{comp.id}</td>
-                        <td className="py-3 px-3">
-                          <input 
-                            type="text" 
-                            value={comp.name} 
-                            onChange={(e) => handleCrmChange(comp.id, 'name', e.target.value)}
-                            className="bg-transparent text-white border-b border-transparent hover:border-slate-500 focus:border-[#E7C768] focus:outline-none text-xs font-bold"
-                          />
-                        </td>
-                        <td className="py-3 px-3">
-                          <input 
-                            type="number" 
-                            value={comp.departmentsCount} 
-                            onChange={(e) => handleCrmChange(comp.id, 'departmentsCount', parseInt(e.target.value) || 0)}
-                            className="w-12 bg-transparent text-slate-300 border-b border-transparent focus:outline-none text-center"
-                          />
-                        </td>
-                        <td className="py-3 px-3">
-                          <input 
-                            type="number" 
-                            value={comp.employeesCount} 
-                            onChange={(e) => handleCrmChange(comp.id, 'employeesCount', parseInt(e.target.value) || 0)}
-                            className="w-12 bg-transparent text-slate-300 border-b border-transparent focus:outline-none text-center"
-                          />
-                        </td>
-                        <td className="py-3 px-3">
-                          <select 
-                            value={comp.status}
-                            onChange={(e) => handleCrmChange(comp.id, 'status', e.target.value)}
-                            className="bg-[#1E4468]/60 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-amber-200"
-                          >
-                            <option value="Активен (Бизнес)">Активен (Бизнес)</option>
-                            <option value="Триал (5 дней)">Триал (5 дней)</option>
-                            <option value="Завершен">Завершен</option>
-                          </select>
-                        </td>
-                        <td className="py-3 px-3">
-                          <input 
-                            type="number" 
-                            value={comp.balance} 
-                            onChange={(e) => handleCrmChange(comp.id, 'balance', parseInt(e.target.value) || 0)}
-                            className="w-16 bg-transparent text-emerald-400 font-bold border-b border-transparent focus:outline-none text-right"
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <CabinetCRM 
+              crmCompanies={crmCompanies}
+              setCrmCompanies={setCrmCompanies}
+              editingCrmCompany={editingCrmCompany}
+              setEditingCrmCompany={setEditingCrmCompany}
+              saveStateToServer={saveStateToServer}
+              company={company}
+              departments={departments}
+              templates={templates}
+              reports={reports}
+              transactions={transactions}
+              notifications={notifications}
+              tariff={tariff}
+              mockEmployees={mockEmployees}
+            />
           )}
 
         </main>
@@ -1151,6 +972,28 @@ export default function CabinetPage({
               >
                 Оформить возврат
               </button>
+            </div>
+
+            {/* NEW ENHANCED INFORMATIONAL HELP WINDOW */}
+            <div className="p-4 rounded-2xl bg-[#1E4468]/50 border border-amber-300/10 text-[11px] space-y-1.5 text-slate-200">
+              <p className="font-bold text-[#F4EE8E] flex items-center gap-1.5">
+                <Landmark size={12} className="text-[#E7C768]" />
+                Справка по расчетным регламентам ii-rr.online:
+              </p>
+              {cashOutTab === 'bonus' ? (
+                <ul className="list-disc pl-4 space-y-1 text-slate-300">
+                  <li><strong>Начисление:</strong> 15% от всех пополнений приглашенных по реферальной ссылке.</li>
+                  <li><strong>Сроки выплаты:</strong> Финансовый отдел производит перевод в течение 24 часов.</li>
+                  <li><strong>Комиссия за перевод:</strong> 0% (платформа берет эквайринг на себя).</li>
+                  <li><strong>Лимиты:</strong> Минимальная сумма вывода составляет 500 ₽.</li>
+                </ul>
+              ) : (
+                <ul className="list-disc pl-4 space-y-1 text-slate-300">
+                  <li><strong>Адресат возврата:</strong> Перевод осуществляется на реквизиты плательщика.</li>
+                  <li><strong>Баланс:</strong> Возвращается неиспользованный остаток подписки за вычетом активных дней.</li>
+                  <li><strong>Сроки зачисления:</strong> От 1 до 3 банковских дней (зависит от банка-эмитента).</li>
+                </ul>
+              )}
             </div>
 
             <form onSubmit={handleCashOutSubmit} className="space-y-4">

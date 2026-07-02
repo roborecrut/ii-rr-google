@@ -16,6 +16,7 @@ export interface UserProfile {
   referralCode: string; // strictly Latin, lowercase
   bonusesEarned: number;
   invitedUsersCount: number;
+  duties?: string[]; // list of employee-specific responsibilities
 }
 
 export interface CompanyInfo {
@@ -31,6 +32,8 @@ export interface Department {
   employeeIds: string[]; // IDs of employees assigned to this department
   telegramChatId: string; // Chat or group ID where reports are posted
   parentId: string | null; // For hierarchical tree connections
+  x?: number; // visual coordinates for node tree layout
+  y?: number;
 }
 
 export type ReportType = 'PLAN_DAY' | 'FACT_DAY' | 'WEEKLY' | 'MONTHLY';

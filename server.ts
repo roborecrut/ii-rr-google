@@ -19,10 +19,20 @@ app.get("/api/health", (req, res) => {
 
 // API: Call Pro-Talk AI service
 app.post("/api/ai/generate", async (req, res) => {
-  const { prompt, systemPrompt, chatId } = req.body;
+  const { prompt, systemPrompt, chatId, userId } = req.body;
   
   if (!prompt) {
     return res.status(400).json({ error: "Prompt is required" });
+  }
+
+  // Generate or use user ID to construct ii_rr<userId> model name
+  let finalModel = "ii_rr";
+  if (userId && /^\d+$/.test(String(userId))) {
+    finalModel = `ii_rr${userId}`;
+  } else {
+    // Generate a random 8-digit numeric ID as fallback
+    const randomId = Math.floor(10000000 + Math.random() * 90000000);
+    finalModel = `ii_rr${randomId}`;
   }
 
   const bot_token = "69415_ex7HN6J3qdiME3jBVbtCyBo4s8me3tvq";
@@ -51,7 +61,7 @@ app.post("/api/ai/generate", async (req, res) => {
         "Authorization": `Bearer ${bot_token}`
       },
       body: JSON.stringify({
-        model: "ii_rr",
+        model: finalModel,
         messages: messages,
         temperature: 0.2
       })
@@ -71,6 +81,53 @@ app.post("/api/ai/generate", async (req, res) => {
     return res.status(500).json({ 
       error: "Ошибка подключения к ИИ-сервису.", 
       message: error.message 
+    });
+  }
+});
+
+// API: Telegram Bot Chat connection check
+app.post("/api/telegram/test-chat", async (req, res) => {
+  const { chatId } = req.body;
+  const token = "8598472380:AAEfgSiqsOJx4mA3Jk5DKYW8AUFgLGV4Sc8";
+
+  if (!chatId) {
+    return res.status(400).json({ success: false, error: "Пожалуйста, введите ID чата." });
+  }
+
+  try {
+    const textMessage = "🤖 **Проверка интеграции ИИ Рапорт**\n\nБот успешно привязан к вашей системе и готов публиковать рапорты сотрудников! Спасибо за успешное добавление!";
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: chatId.trim(),
+        text: textMessage,
+        parse_mode: "Markdown"
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+      return res.json({ 
+        success: true, 
+        message: "Бот успешно добавлен! В ваш чат отправлено подтверждающее сообщение." 
+      });
+    } else {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Ошибка Telegram API: ${data.description}. Проверьте, добавлен ли бот @ii_rr_bot в чат и правильность введённого ID.` 
+      });
+    }
+  } catch (error: any) {
+    console.error("Telegram test error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      error: `Не удалось связаться с Telegram API: ${error.message}` 
     });
   }
 });
