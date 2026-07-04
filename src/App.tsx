@@ -111,14 +111,16 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#17344F] via-[#1E4468] to-[#265582] text-white selection:bg-amber-200 selection:text-slate-900 overflow-x-hidden relative">
       <InteractiveNetworkBackground />
       
-      {/* GLOBAL HEADER */}
-      <Header 
-        currentPath={currentPath}
-        onNavigate={handleNavigate}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        onOpenLoginModal={() => setIsLoginModalOpen(true)}
-      />
+      {/* GLOBAL HEADER (Only on non-cabinet pages) */}
+      {!currentPath.startsWith('/cabinet') && (
+        <Header 
+          currentPath={currentPath}
+          onNavigate={handleNavigate}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        />
+      )}
 
       {/* DYNAMIC CONTENT ROUTER */}
       <div className="flex-1 w-full">
@@ -140,6 +142,7 @@ export default function App() {
             onNavigate={handleNavigate}
             currentUser={currentUser}
             onUpdateUser={handleUpdateUser}
+            onLogout={handleLogout}
           />
         )}
       </div>

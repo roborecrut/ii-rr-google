@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { 
   User, Building, Layers, Users, FileText, Calendar as CalendarIcon, 
   Clock, BarChart3, Settings, CreditCard, Shield, Send, Mic, Sparkles, 
-  Plus, Trash2, Check, HelpCircle, Edit3, Save, ArrowUpRight, MessageSquare, AlertCircle, Share2, Bell, X, Landmark, Menu, Bot
+  Plus, Trash2, Check, HelpCircle, Edit3, Save, ArrowUpRight, MessageSquare, AlertCircle, Share2, Bell, X, Landmark, Menu, Bot, LogOut
 } from 'lucide-react';
 import { 
   UserRole, UserProfile, CompanyInfo, Department, ReportTemplate, 
@@ -31,6 +31,7 @@ interface CabinetPageProps {
   onNavigate: (path: string) => void;
   currentUser: UserProfile | null;
   onUpdateUser: (user: UserProfile) => void;
+  onLogout?: () => void;
 }
 
 // Initial default state if server has nothing saved
@@ -196,7 +197,8 @@ export default function CabinetPage({
   currentPath,
   onNavigate,
   currentUser,
-  onUpdateUser
+  onUpdateUser,
+  onLogout
 }: CabinetPageProps) {
   // Active Tab state
   const [activeTab, setActiveTab] = useState<string>('profile');
@@ -549,6 +551,74 @@ export default function CabinetPage({
   return (
     <div className="w-full text-white bg-transparent font-sans p-4 sm:p-6 min-h-screen relative" id="cabinet-root">
       
+      {/* DEDICATED CABINET HEADER FOR DESKTOP */}
+      <div className="hidden lg:flex items-center justify-between p-4 bg-gradient-to-r from-[#17344F]/95 to-[#265582]/95 backdrop-blur-md border border-white/10 rounded-2xl mb-6 mx-auto max-w-7xl shadow-xl" id="desktop-cabinet-header">
+        <div className="flex items-center gap-4">
+          <div 
+            onClick={() => onNavigate('/')} 
+            className="flex items-center gap-2.5 cursor-pointer group"
+          >
+            <img 
+              src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR-Logo.png" 
+              alt="RR Logo" 
+              className="w-8 h-8 object-contain group-hover:rotate-12 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(231,199,104,0.2)]"
+              referrerPolicy="no-referrer"
+            />
+            <div>
+              <h1 className="text-sm font-extrabold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] bg-clip-text text-transparent leading-none tracking-wider font-sans">
+                ИИ РАПОРТ
+              </h1>
+              <p className="text-[9px] text-slate-400 uppercase font-mono mt-0.5 tracking-widest font-semibold">Личный кабинет</p>
+            </div>
+          </div>
+
+          <div className="h-6 w-px bg-white/10" />
+
+          {/* Company Badge */}
+          <div className="text-xs text-slate-300 font-sans flex items-center gap-1.5 bg-[#17344F]/60 px-3 py-1.5 rounded-xl border border-white/5 shadow-inner">
+            <Building size={12} className="text-[#E7C768]" />
+            <span className="font-semibold text-slate-200">{company.name}</span>
+          </div>
+        </div>
+
+        {/* Right Section: Navigation back, user status and Logout */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => onNavigate('/')}
+            className="px-3.5 py-1.5 rounded-xl border border-white/10 bg-[#1E4468]/40 hover:bg-[#1E4468]/80 text-slate-200 hover:text-white text-xs font-semibold tracking-wide transition-all cursor-pointer flex items-center gap-1.5"
+            id="cabinet-back-home-btn"
+          >
+            ← Вернуться на главную
+          </button>
+
+          <div className="h-6 w-px bg-white/10" />
+
+          {/* User profile capsule */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-[#1E4468] border border-[#E7C768] flex items-center justify-center font-bold text-xs text-[#F4EE8E]">
+              {currentUser?.name.charAt(0) || 'U'}
+            </div>
+            <div className="text-left">
+              <p className="text-xs font-bold leading-none text-white">{currentUser?.name}</p>
+              <p className="text-[9px] text-amber-200 mt-1 leading-none font-mono">
+                {currentUser?.role === UserRole.ADMIN ? 'Глобальный Админ' : currentUser?.role === UserRole.DIRECTOR ? 'Директор' : currentUser?.role === UserRole.MANAGER ? 'Руководитель' : 'Сотрудник'}
+              </p>
+            </div>
+          </div>
+
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-2 rounded-xl border border-white/10 text-slate-300 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
+              title="Выйти из личного кабинета"
+              id="cabinet-header-logout"
+            >
+              <LogOut size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* DEVELOPMENT MOCK ROLE SELECTOR BAR */}
       <div className="mx-auto max-w-7xl mb-6 p-4 rounded-2xl bg-[#1E4468]/30 border border-amber-200/25 flex flex-wrap items-center justify-between gap-4" id="role-selector-bar">
         <div className="flex items-center gap-2">
@@ -582,8 +652,8 @@ export default function CabinetPage({
         </div>
       </div>
 
-      {/* MOBILE HEADER */}
-      <div className="lg:hidden flex items-center justify-between p-3.5 bg-[#17344F]/90 backdrop-blur-md border border-white/10 rounded-2xl mb-4" id="mobile-cabinet-header">
+      {/* MOBILE HEADER (FIXED/STICKY AT THE TOP WITH FLUSH EDGES) */}
+      <div className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-2.5 bg-[#17344F]/95 backdrop-blur-md border-b border-white/10 -mx-4 -mt-4 mb-5 shadow-lg" id="mobile-cabinet-header">
         <button 
           onClick={() => setIsMobileMenuOpen(true)}
           className="p-2 -ml-2 text-slate-300 hover:text-white transition-colors cursor-pointer"
@@ -1464,105 +1534,105 @@ export default function CabinetPage({
       )}
 
       {/* MOBILE BOTTOM NAVBAR */}
-      <nav className="fixed bottom-3 left-4 right-4 z-40 bg-[#17344F]/95 backdrop-blur-md border border-white/10 rounded-2xl flex justify-around py-2 px-1 shadow-2xl lg:hidden animate-slide-in-bottom" id="mobile-bottom-navbar">
-        {currentUser?.role === UserRole.EMPLOYEE ? (
-          <>
-            <button
-              onClick={() => handleTabClick('fill_report')}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'fill_report' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <FileText size={15} />
-              <span className="text-[9px] font-bold">Ввод</span>
-            </button>
-            <button
-              onClick={() => handleTabClick('employee_schedule')}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'employee_schedule' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Clock size={15} />
-              <span className="text-[9px] font-bold">График</span>
-            </button>
-            <button
-              onClick={() => handleTabClick('calendar')}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <CalendarIcon size={15} />
-              <span className="text-[9px] font-bold">Рапорты</span>
-            </button>
-            <button
-              onClick={() => handleTabClick('profile')}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <User size={15} />
-              <span className="text-[9px] font-bold">Профиль</span>
-            </button>
-            <button
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('open-ai-assistant'));
-              }}
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-amber-200 hover:text-white transition-all cursor-pointer"
-            >
-              <Bot size={15} className="animate-pulse" />
-              <span className="text-[9px] font-bold">ИИ Бот</span>
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => handleTabClick('calendar')}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <CalendarIcon size={15} />
-              <span className="text-[9px] font-bold">Рапорты</span>
-            </button>
-            <button
-              onClick={() => handleTabClick('employees')}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'employees' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Users size={15} />
-              <span className="text-[9px] font-bold">Команда</span>
-            </button>
-            <button
-              onClick={() => handleTabClick('analytics')}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'analytics' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <BarChart3 size={15} />
-              <span className="text-[9px] font-bold">Анализ</span>
-            </button>
-            <button
-              onClick={() => handleTabClick('profile')}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <User size={15} />
-              <span className="text-[9px] font-bold">Профиль</span>
-            </button>
-            <button
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('open-ai-assistant'));
-              }}
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-amber-200 hover:text-white transition-all cursor-pointer"
-            >
-              <Bot size={15} className="animate-pulse" />
-              <span className="text-[9px] font-bold">ИИ Бот</span>
-            </button>
-          </>
-        )}
-      </nav>
+      <div className="fixed bottom-3 left-2.5 right-2.5 z-40 lg:hidden flex gap-2 items-center animate-slide-in-bottom" id="mobile-bottom-navbar-container">
+        {/* Left Part: Long panel with 4 icons */}
+        <nav className="flex-1 bg-[#17344F]/95 backdrop-blur-md border border-white/10 rounded-2xl flex justify-around py-1.5 px-0.5 shadow-2xl h-14 items-center" id="mobile-bottom-navbar">
+          {currentUser?.role === UserRole.EMPLOYEE ? (
+            <>
+              <button
+                onClick={() => handleTabClick('fill_report')}
+                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'fill_report' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <FileText size={15} />
+                <span className="text-[8px] font-bold truncate max-w-full">Ввод</span>
+              </button>
+              <button
+                onClick={() => handleTabClick('employee_schedule')}
+                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'employee_schedule' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Clock size={15} />
+                <span className="text-[8px] font-bold truncate max-w-full">График</span>
+              </button>
+              <button
+                onClick={() => handleTabClick('calendar')}
+                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <CalendarIcon size={15} />
+                <span className="text-[8px] font-bold truncate max-w-full">Рапорты</span>
+              </button>
+              <button
+                onClick={() => handleTabClick('profile')}
+                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <User size={15} />
+                <span className="text-[8px] font-bold truncate max-w-full">Профиль</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => handleTabClick('calendar')}
+                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <CalendarIcon size={15} />
+                <span className="text-[8px] font-bold truncate max-w-full">Рапорты</span>
+              </button>
+              <button
+                onClick={() => handleTabClick('employees')}
+                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'employees' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Users size={15} />
+                <span className="text-[8px] font-bold truncate max-w-full">Команда</span>
+              </button>
+              <button
+                onClick={() => handleTabClick('analytics')}
+                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'analytics' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <BarChart3 size={15} />
+                <span className="text-[8px] font-bold truncate max-w-full">Анализ</span>
+              </button>
+              <button
+                onClick={() => handleTabClick('profile')}
+                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <User size={15} />
+                <span className="text-[8px] font-bold truncate max-w-full">Профиль</span>
+              </button>
+            </>
+          )}
+        </nav>
+
+        {/* Right Part: Round circular AI assistant button with gold glowing border */}
+        <button
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('open-ai-assistant'));
+          }}
+          className="w-12 h-12 rounded-full border border-[#E7C768] bg-gradient-to-br from-[#1E4468] to-[#17344F] flex flex-col items-center justify-center shadow-[0_0_12px_rgba(231,199,104,0.4)] hover:brightness-110 active:scale-95 transition-all cursor-pointer text-amber-200 shrink-0 select-none relative group"
+          id="mobile-ai-navbar-btn"
+          title="ИИ Ассистент"
+        >
+          {/* Subtle gold glow pulse background */}
+          <span className="absolute inset-0 rounded-full bg-amber-400/10 animate-ping pointer-events-none" />
+          <Bot size={18} className="animate-pulse text-[#F4EE8E]" />
+          <span className="text-[7.5px] font-extrabold text-amber-200 leading-none mt-0.5">ИИ Бот</span>
+        </button>
+      </div>
 
     </div>
   );
