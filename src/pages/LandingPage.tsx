@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Sparkles, MessageSquare, Mic, ShieldAlert, Calendar, Users, Sliders, Check, HelpCircle, ArrowRight, MessageCircle } from 'lucide-react';
+import { motion } from 'motion/react';
 import TypewriterText from '../components/TypewriterText';
 import VerticalReviewsCarousel from '../components/VerticalReviewsCarousel';
+import InteractiveFlowSimulator from '../components/InteractiveFlowSimulator';
 
 interface Review {
   id: string;
@@ -98,7 +100,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
 
     // Simulate AI generation for the review reply
     setTimeout(async () => {
-      let aiGeneratedReply = "Спасибо за ваш отзыв! Мы постоянно обучаем нейросеть ii_rr, чтобы отчетность становилась еще удобнее для вашего бизнеса.";
+      let aiGeneratedReply = "Спасибо за ваш отзыв! Мы постоянно обучаем нейросеть RR, чтобы отчетность становилась еще удобнее для вашего бизнеса.";
       
       try {
         const promptText = `Пользователь оставил отзыв на сервис ИИ Рапорт: "${newReviewText}". Напиши краткий, дружелюбный автоматический ответ от нейросети ИИ Рапорт на этот отзыв (1-2 предложения).`;
@@ -150,14 +152,20 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
         <div className="mx-auto max-w-7xl relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* Hero text content */}
-          <div className="lg:col-span-7 space-y-6 text-left animate-slide-left">
+          <motion.div 
+            initial={{ opacity: 0, x: -60 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="lg:col-span-7 space-y-6 text-left"
+          >
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-amber-200/30 bg-[#17344F]/60 text-amber-200 text-xs font-semibold tracking-wider uppercase font-mono shadow-md">
               <Sparkles size={13} className="text-amber-300 animate-spin" />
               <span>Главное УТП: ИИ Рекомендации сотрудникам</span>
             </div>
 
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight bg-gradient-to-r from-white via-slate-100 to-[#F4EE8E] bg-clip-text text-transparent">
-              <TypewriterText text="ИИ Рапорт — отчеты, которые обучают" speed={40} />
+              ИИ Рапорт — отчеты, которые обучают
             </h2>
 
             <p className="text-base sm:text-lg text-slate-200 leading-relaxed max-w-2xl">
@@ -166,15 +174,15 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
 
             {/* Quick stats badges */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-3 text-left">
-              <div className="p-3 rounded-2xl bg-[#17344F]/50 border border-white/5 backdrop-blur-md">
+              <div className="p-3 rounded-2xl bg-[#17344F]/50 border border-white/5">
                 <p className="text-xl font-bold text-amber-200 font-mono">2 минуты</p>
                 <p className="text-[11px] text-slate-300">на заполнение с ИИ</p>
               </div>
-              <div className="p-3 rounded-2xl bg-[#17344F]/50 border border-white/5 backdrop-blur-md">
+              <div className="p-3 rounded-2xl bg-[#17344F]/50 border border-white/5">
                 <p className="text-xl font-bold text-amber-200 font-mono">100%</p>
                 <p className="text-[11px] text-slate-300">персональный анализ</p>
               </div>
-              <div className="p-3 rounded-2xl bg-[#17344F]/50 border border-white/5 backdrop-blur-md col-span-2 sm:col-span-1">
+              <div className="p-3 rounded-2xl bg-[#17344F]/50 border border-white/5 col-span-2 sm:col-span-1">
                 <p className="text-xl font-bold text-emerald-400 font-mono">15 минут</p>
                 <p className="text-[11px] text-slate-300">напоминания в Telegram</p>
               </div>
@@ -202,11 +210,17 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                 Рассчитать стоимость
               </button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Hero Mascot representation */}
-          <div className="lg:col-span-5 flex justify-center items-center">
-            <div className="relative p-6 rounded-3xl bg-[#17344F]/40 border border-white/10 shadow-2xl backdrop-blur-md flex flex-col items-center max-w-sm w-full" id="hero-mascot-box">
+          <motion.div 
+            initial={{ opacity: 0, x: 60 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="lg:col-span-5 flex justify-center items-center"
+          >
+            <div className="relative p-6 rounded-3xl bg-[#17344F]/40 border border-white/10 shadow-2xl flex flex-col items-center max-w-sm w-full" id="hero-mascot-box">
               {/* Glass reflection */}
               <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/5 to-white/10 rounded-3xl" />
               
@@ -221,13 +235,13 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-[#17344F]/85" />
               </div>
             </div>
-          </div>
+          </motion.div>
 
         </div>
       </section>
 
       {/* 2. CORE USP & FEATURES SECTION */}
-      <section className="py-20 px-4 sm:px-6 bg-[#17344F]/20 backdrop-blur-sm" id="features-section">
+      <section className="py-20 px-4 sm:px-6 bg-[#17344F]/20" id="features-section">
         <div className="mx-auto max-w-7xl text-center space-y-12">
           
           <div className="space-y-4 max-w-3xl mx-auto">
@@ -243,7 +257,13 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 text-left">
             
             {/* Main USP Box: Large */}
-            <div className="md:col-span-7 rounded-3xl border border-white/10 bg-gradient-to-br from-[#17344F] to-[#265582] p-8 shadow-xl relative overflow-hidden flex flex-col justify-between group">
+            <motion.div 
+              initial={{ opacity: 0, x: -60 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6 }}
+              className="md:col-span-7 rounded-3xl border border-white/10 bg-gradient-to-br from-[#17344F] to-[#265582] p-8 shadow-xl relative overflow-hidden flex flex-col justify-between group"
+            >
               <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/5 to-white/10" />
               <div className="space-y-4">
                 <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-200">
@@ -268,26 +288,38 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                   <p className="text-slate-300 italic">"Я проверяю рапорты на содержательность, выставляю балл качества (Quality Score) и указываю на слабые места."</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Voice typing box */}
-            <div className="md:col-span-5 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-8 shadow-xl flex flex-col justify-between">
+            <motion.div 
+              initial={{ opacity: 0, x: 60 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6 }}
+              className="md:col-span-5 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-8 shadow-xl flex flex-col justify-between"
+            >
               <div className="space-y-4">
                 <div className="w-10 h-10 rounded-xl bg-sky-400/10 border border-sky-400/30 flex items-center justify-center text-sky-400">
                   <Mic size={20} />
                 </div>
                 <h4 className="text-lg font-bold text-white">Голосовой отчет в один клик</h4>
                 <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-                  Не тратьте время на печать. Нажмите микрофон и просто надиктуйте, что сделали. Наша нейросеть <code className="text-amber-200 font-mono font-semibold">ii_rr</code> уберет слова-паразиты, структурирует мысли и переведет рапорт в безупречный деловой стиль.
+                  Не тратьте время на печать. Нажмите микрофон и просто надиктуйте, что сделали. Наша нейросеть <code className="text-amber-200 font-mono font-semibold">RR</code> уберет слова-паразиты, структурирует мысли и переведет рапорт в безупречный деловой стиль.
                 </p>
               </div>
               <div className="pt-6 border-t border-white/5 mt-6 text-xs text-slate-400 font-mono">
                 ✓ Снижает время отчетности с 20 до 2 минут
               </div>
-            </div>
+            </motion.div>
 
             {/* Reports structure types */}
-            <div className="md:col-span-4 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-6 shadow-xl flex flex-col justify-between">
+            <motion.div 
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5 }}
+              className="md:col-span-4 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-6 shadow-xl flex flex-col justify-between"
+            >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-200">
                   <Calendar size={18} />
@@ -297,10 +329,16 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                   Планы на день (начало смены), Факт работы (конец смены), развернутые Отчеты за неделю и месяц. Вся отчетность фильтруется по удобному календарю для контроля периодов.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* For Managers and Directors */}
-            <div className="md:col-span-4 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-6 shadow-xl flex flex-col justify-between">
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5 }}
+              className="md:col-span-4 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-6 shadow-xl flex flex-col justify-between"
+            >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
                   <Users size={18} />
@@ -310,10 +348,16 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                   Забудьте про чтение сотен отчетов. ИИ соберет все рапорты ваших сотрудников в емкие саммари за любой период, подсветит проблемы, успехи и даст готовую сводную аналитику.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Dynamic visual charts */}
-            <div className="md:col-span-4 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-6 shadow-xl flex flex-col justify-between">
+            <motion.div 
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5 }}
+              className="md:col-span-4 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-6 shadow-xl flex flex-col justify-between"
+            >
               <div className="space-y-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-400/10 border border-purple-400/30 flex items-center justify-center text-purple-400">
                   <Sliders size={18} />
@@ -323,18 +367,49 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                   Создавайте любые поля в удобном ИИ-конструкторе под специфику конкретного отдела за 5 секунд. ИИ сам подскажет лучшие формулировки вопросов и подсказок.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
           </div>
         </div>
       </section>
 
+      {/* NEW: INTERACTIVE STEP-BY-STEP SIMULATOR SECTION */}
+      <section className="py-20 px-4 sm:px-6 bg-gradient-to-b from-[#17344F]/40 to-[#1E4468]/40 border-t border-b border-white/5 relative" id="interactive-simulator-section">
+        {/* Absolute glow element */}
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-amber-200/5 blur-[100px] pointer-events-none" />
+        
+        <div className="mx-auto max-w-7xl">
+          
+          <div className="text-center space-y-4 max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-200 text-xs font-semibold uppercase tracking-wider font-mono">
+              <Sparkles size={13} className="animate-pulse" />
+              <span>Живой Симулятор</span>
+            </div>
+            <h3 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-[#F4EE8E] bg-clip-text text-transparent">
+              Как устроен рабочий цикл ИИ Рапорта
+            </h3>
+            <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
+              Нажмите на шаги ниже, чтобы в реальном времени увидеть весь процесс: от ИИ-генерации полей шаблона до голосовой сдачи отчета сотрудником и автоматической аналитики директору.
+            </p>
+          </div>
+
+          <InteractiveFlowSimulator />
+
+        </div>
+      </section>
+
       {/* 3. TELEGRAM INTEGRATION & NOTIFICATIONS */}
-      <section className="py-20 px-4 sm:px-6 bg-[#265582]/20 border-t border-b border-white/10 backdrop-blur-sm relative" id="telegram-section">
+      <section className="py-20 px-4 sm:px-6 bg-[#265582]/20 border-t border-b border-white/10 relative" id="telegram-section">
         <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* Text and stats */}
-          <div className="lg:col-span-7 space-y-6">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6 }}
+            className="lg:col-span-7 space-y-6"
+          >
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/20 text-sky-400 text-xs font-semibold">
               <MessageCircle size={13} />
               <span>Интеграция с Telegram</span>
@@ -361,10 +436,16 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                 <p className="text-slate-300 italic">"Бип-буп! Я никогда не просплю. Если отчет задерживается — я вежливо, но настойчиво напомню сотруднику в личные сообщения!"</p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Graphic mockup of Telegram message */}
-          <div className="lg:col-span-5 flex justify-center">
+          <motion.div 
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6 }}
+            className="lg:col-span-5 flex justify-center"
+          >
             <div className="w-full max-w-sm rounded-3xl border border-sky-500/30 bg-gradient-to-br from-[#17344F] to-[#265582] p-6 shadow-2xl relative flex flex-col justify-between" id="telegram-mockup">
               <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
                 <div className="flex items-center gap-2">
@@ -400,13 +481,13 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
 
         </div>
       </section>
 
       {/* 4. PRICING & CALCULATOR SECTION */}
-      <section className="py-20 px-4 sm:px-6 bg-[#17344F]/10 backdrop-blur-sm" id="calculator-section">
+      <section className="py-20 px-4 sm:px-6 bg-[#17344F]/10" id="calculator-section">
         <div className="mx-auto max-w-7xl text-center space-y-12">
           
           <div className="space-y-4 max-w-3xl mx-auto">
@@ -424,7 +505,13 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start text-left">
             
             {/* Trial Card */}
-            <div className="lg:col-span-5 rounded-3xl border-2 border-amber-200/30 bg-gradient-to-b from-[#17344F] to-[#265582] p-8 shadow-2xl relative overflow-hidden flex flex-col justify-between h-full group">
+            <motion.div 
+              initial={{ opacity: 0, x: -60 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-5 rounded-3xl border-2 border-amber-200/30 bg-gradient-to-b from-[#17344F] to-[#265582] p-8 shadow-2xl relative overflow-hidden flex flex-col justify-between h-full group"
+            >
               <div className="absolute top-0 right-0 p-2 text-[10px] font-bold tracking-widest text-[#F4EE8E] uppercase bg-amber-500/20 rounded-bl-xl border-l border-b border-amber-200/20 font-mono">
                 ТРИАЛ
               </div>
@@ -483,10 +570,16 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
               >
                 Запустить триал бесплатно
               </button>
-            </div>
+            </motion.div>
 
             {/* Business Card with Slider */}
-            <div className="lg:col-span-7 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-8 shadow-2xl flex flex-col justify-between h-full">
+            <motion.div 
+              initial={{ opacity: 0, x: 60 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-7 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-8 shadow-2xl flex flex-col justify-between h-full"
+            >
               
               <div className="space-y-6">
                 <div className="flex justify-between items-start">
@@ -565,14 +658,14 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
               >
                 Купить для {employeesCount} сотрудников
               </button>
-            </div>
+            </motion.div>
 
           </div>
         </div>
       </section>
 
       {/* 5. INTERACTIVE REVIEWS & FEEDBACK FORM */}
-      <section className="py-20 px-4 sm:px-6 bg-[#265582]/10 border-t border-white/10 backdrop-blur-sm" id="reviews-section">
+      <section className="py-20 px-4 sm:px-6 bg-[#265582]/10 border-t border-white/10" id="reviews-section">
         <div className="mx-auto max-w-7xl">
           
           <div className="text-center space-y-4 mb-12">
@@ -596,16 +689,30 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Reviews display list (Vertical Carousel with 2 preview blocks on each side) */}
-            <div className="lg:col-span-7" id="reviews-carousel-container">
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-7" 
+              id="reviews-carousel-container"
+            >
               <VerticalReviewsCarousel 
                 reviews={reviews}
                 activeIndex={activeReviewIndex}
                 onChangeIndex={setActiveReviewIndex}
               />
-            </div>
+            </motion.div>
 
             {/* Submit review form */}
-            <div className="lg:col-span-5 rounded-3xl border border-amber-200/30 bg-gradient-to-b from-[#17344F] to-[#265582] p-8 shadow-2xl relative overflow-hidden" id="review-form-box">
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-5 rounded-3xl border border-amber-200/30 bg-gradient-to-b from-[#17344F] to-[#265582] p-8 shadow-2xl relative overflow-hidden" 
+              id="review-form-box"
+            >
               <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/5 to-white/10" />
               
               <h4 className="text-lg font-bold text-white mb-1 font-sans">Оставить анонимный отзыв</h4>
@@ -662,7 +769,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                   Отправить отзыв
                 </button>
               </form>
-            </div>
+            </motion.div>
 
           </div>
         </div>

@@ -41,8 +41,9 @@ export type ReportType = 'PLAN_DAY' | 'FACT_DAY' | 'WEEKLY' | 'MONTHLY';
 export interface ReportField {
   id: string;
   label: string;
-  type: 'text' | 'voice' | 'number' | 'checkbox';
+  type: 'text' | 'text_paragraph' | 'text_short' | 'list' | 'checkboxes' | 'voice' | 'number' | 'image' | 'photo' | 'document' | 'checkbox' | 'select' | 'geolocation';
   required: boolean;
+  options?: string[]; // for select dropdown options
 }
 
 export interface ReportTemplate {
@@ -53,6 +54,9 @@ export interface ReportTemplate {
   fields: ReportField[];
   employeeIds: string[]; // assigned employees who must fill it
   managerId: string; // manager who receives it
+  customPrompt?: string; // custom prompt for AI review
+  reminderMinutes?: number; // minutes after deadline
+  reminderText?: string; // notification message template
 }
 
 export interface SubmittedReport {
@@ -73,8 +77,11 @@ export interface SubmittedReport {
   managerComment?: string;
   managerTask?: string;
   managerReaction?: string;
+  managerFeedbackQuick?: string; // fast click feedback choice
   fieldComments?: Record<string, string>;
   isReviewedByManager?: boolean;
+  statusColor?: 'green' | 'yellow' | 'red'; // report color status
+  customPromptUsed?: string;
 }
 
 export type ScheduleTemplate = '5_2' | '2_2' | '6_1' | 'SHIFTS';

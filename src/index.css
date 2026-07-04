@@ -29,6 +29,23 @@ body {
   overflow-x: hidden;
 }
 
+/* Custom styling for all dropdown selects and options to match the dark blue/amber theme */
+select {
+  background-color: #17344F !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+select option {
+  background-color: #11293F !important;
+  color: #f8fafc !important;
+}
+
+select option:checked {
+  background-color: #1E4468 !important;
+  color: #F4EE8E !important;
+}
+
 /* Webkit scrollbar stylings for elegant desktop experience */
 ::-webkit-scrollbar {
   width: 6px;
@@ -44,3 +61,16 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
+/* Ensure minimum font size is 12px globally for both landing page and cabinets */
+[class*="text-[8px]"],
+[class*="text-[9px]"],
+[class*="text-[10px]"],
+[class*="text-[11px]"],
+.text-\[8px\],
+.text-\[9px\],
+.text-\[10px\],
+.text-\[11px\] {
+  font-size: 12px !important;
+}
+

@@ -17,6 +17,7 @@ interface CabinetCalendarProps {
   notifications: any;
   tariff: any;
   crmCompanies: any;
+  promptManagerFeedback?: string;
 }
 
 export default function CabinetCalendar({
@@ -32,15 +33,34 @@ export default function CabinetCalendar({
   transactions,
   notifications,
   tariff,
-  crmCompanies
+  crmCompanies,
+  promptManagerFeedback
 }: CabinetCalendarProps) {
   // Calendar states
   const [currentYear, setCurrentYear] = useState(2026);
   const [currentMonth, setCurrentMonth] = useState(6); // 0-indexed, so 6 is July
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+
+  // Traffic light settings (adjustable by Directors, Admins, and Managers)
+  const [greenThreshold, setGreenThreshold] = useState<number>(() => {
+    const saved = localStorage.getItem('traffic_light_green');
+    return saved ? parseInt(saved, 10) : 75;
+  });
+  const [yellowThreshold, setYellowThreshold] = useState<number>(() => {
+    const saved = localStorage.getItem('traffic_light_yellow');
+    return saved ? parseInt(saved, 10) : 45;
+  });
+
+  const canAdjustThresholds = currentUser && (
+    currentUser.role === UserRole.DIRECTOR || 
+    currentUser.role === UserRole.ADMIN || 
+    currentUser.role === UserRole.MANAGER
+  );
 
   // Filters
   const [calendarFilterDept, setCalendarFilterDept] = useState('All');
   const [calendarFilterEmp, setCalendarFilterEmp] = useState('All');
+  const [colorFilter, setColorFilter] = useState<'All' | 'green' | 'yellow' | 'red'>('All');
 
   // Selected report for manager review card
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
@@ -130,7 +150,7 @@ export default function CabinetCalendar({
   const handleAIBossFeedback = () => {
     if (!selectedReport) return;
 
-    const sysPrompt = `Ты — опытный, мудрый генеральный директор компании. Твоя задача — прочитать отчет сотрудника и составить короткий, мотивирующий, но деловой отзыв руководителя на русском языке (1-2 предложения). Можешь похвалить за высокие показатели или подсказать решение проблем, если они указаны.`;
+    const sysPrompt = promptManagerFeedback || `Ты — опытный, мудрый генеральный директор компании. Твоя задача — прочитать отчет сотрудника и составить короткий, мотивирующий, но деловой отзыв руководителя на русском языке (1-2 предложения). Можешь похвалить за высокие показатели или подсказать решение проблем, если они указаны.`;
     const promptText = `Отчет сотрудника ${selectedReport.employeeName} (${selectedReport.templateTitle}):
 ${Object.entries(selectedReport.answers).map(([k, v]) => `- ${k}: ${v}`).join('\n')}
 Напиши профессиональный отзыв начальника.`;
@@ -197,6 +217,11 @@ ${Object.entries(selectedReport.answers).map(([k, v]) => `- ${k}: ${v}`).join('\
     if (calendarFilterDept !== 'All' && r.departmentId !== calendarFilterDept) return false;
     // Employee filter
     if (calendarFilterEmp !== 'All' && !r.employeeName.includes(calendarFilterEmp)) return false;
+    // Requirement 4: Color status traffic-light filter
+    if (colorFilter !== 'All') {
+      const repColor = r.statusColor || (r.qualityScore >= greenThreshold ? 'green' : r.qualityScore >= yellowThreshold ? 'yellow' : 'red');
+      if (repColor !== colorFilter) return false;
+    }
     return true;
   });
 
@@ -208,23 +233,49 @@ ${Object.entries(selectedReport.answers).map(([k, v]) => `- ${k}: ${v}`).join('\
           <p className="text-xs text-slate-400">Интерактивный календарный аудит сданных рапортов с оценкой ИИ и пультом руководителя.</p>
         </div>
         
-        {/* Navigation Month buttons */}
-        <div className="flex items-center gap-2 bg-[#17344F]/60 border border-white/10 p-1.5 rounded-xl self-start sm:self-center">
-          <button 
-            onClick={prevMonth}
-            className="p-1.5 hover:bg-[#1E4468]/50 text-slate-300 hover:text-white rounded-lg cursor-pointer"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className="text-xs font-bold font-sans text-[#F4EE8E] px-2 min-w-[100px] text-center">
-            {monthNamesRu[currentMonth]} {currentYear}
-          </span>
-          <button 
-            onClick={nextMonth}
-            className="p-1.5 hover:bg-[#1E4468]/50 text-slate-300 hover:text-white rounded-lg cursor-pointer"
-          >
-            <ChevronRight size={16} />
-          </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Toggle View Mode */}
+          <div className="flex items-center bg-[#17344F]/60 border border-white/10 p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'calendar' 
+                  ? 'bg-[#E7C768] text-slate-900 shadow' 
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              Календарь
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'list' 
+                  ? 'bg-[#E7C768] text-slate-900 shadow' 
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              Список
+            </button>
+          </div>
+
+          {/* Navigation Month buttons */}
+          <div className="flex items-center gap-2 bg-[#17344F]/60 border border-white/10 p-1.5 rounded-xl">
+            <button 
+              onClick={prevMonth}
+              className="p-1.5 hover:bg-[#1E4468]/50 text-slate-300 hover:text-white rounded-lg cursor-pointer"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs font-bold font-sans text-[#F4EE8E] px-2 min-w-[100px] text-center">
+              {monthNamesRu[currentMonth]} {currentYear}
+            </span>
+            <button 
+              onClick={nextMonth}
+              className="p-1.5 hover:bg-[#1E4468]/50 text-slate-300 hover:text-white rounded-lg cursor-pointer"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -234,7 +285,7 @@ ${Object.entries(selectedReport.answers).map(([k, v]) => `- ${k}: ${v}`).join('\
           <select 
             value={calendarFilterDept}
             onChange={(e) => setCalendarFilterDept(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-[#1E4468]/60 border border-white/10 text-slate-300 focus:outline-none"
+            className="px-3 py-1.5 rounded-lg bg-[#1E4468]/60 border border-white/10 text-slate-300 focus:outline-none cursor-pointer"
           >
             <option value="All">Все отделы</option>
             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -243,96 +294,249 @@ ${Object.entries(selectedReport.answers).map(([k, v]) => `- ${k}: ${v}`).join('\
           <select 
             value={calendarFilterEmp}
             onChange={(e) => setCalendarFilterEmp(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-[#1E4468]/60 border border-white/10 text-slate-300 focus:outline-none"
+            className="px-3 py-1.5 rounded-lg bg-[#1E4468]/60 border border-white/10 text-slate-300 focus:outline-none cursor-pointer"
           >
             <option value="All">Все сотрудники</option>
             <option value="Иван">Иван Смирнов</option>
             <option value="Анна">Анна Петрова</option>
             <option value="Сергей">Сергей Федоров</option>
           </select>
+
+          {/* Requirement 4: Dropdown to filter by Traffic-Light color status */}
+          <select 
+            value={colorFilter}
+            onChange={(e: any) => setColorFilter(e.target.value)}
+            className="px-3 py-1.5 rounded-lg bg-[#1E4468]/60 border border-white/10 text-slate-300 focus:outline-none cursor-pointer"
+          >
+            <option value="All">Все оценки (Светофор)</option>
+            <option value="green">🟢 Высокая оценка (Зеленый)</option>
+            <option value="yellow">🟡 Средняя оценка (Желтый)</option>
+            <option value="red">🔴 Низкая / Срочно! (Красный)</option>
+          </select>
         </div>
 
-        <div className="text-[10px] text-slate-400 font-mono flex items-center gap-3">
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block"></span> ≥80 Баллов</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 block"></span> 50-79 Баллов</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-400 block"></span> &lt;50 Баллов</span>
+        <div className="text-[10px] text-slate-400 font-mono flex flex-wrap items-center gap-3 bg-[#17344F]/50 px-3 py-1.5 rounded-xl border border-white/5">
+          <span className="text-slate-300 font-sans font-bold">Настройка порогов светофора:</span>
+          
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block"></span> 
+            <span>Зеленый ≥</span>
+            {canAdjustThresholds ? (
+              <input 
+                type="number" 
+                min="0" 
+                max="100" 
+                value={greenThreshold} 
+                onChange={(e) => {
+                  const val = Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0));
+                  setGreenThreshold(val);
+                  localStorage.setItem('traffic_light_green', val.toString());
+                }}
+                className="w-10 bg-[#1E4468] border border-white/20 rounded text-center text-white py-0.5 font-bold"
+              />
+            ) : (
+              <span>{greenThreshold}</span>
+            )}
+          </span>
+
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 block"></span> 
+            <span>Желтый ≥</span>
+            {canAdjustThresholds ? (
+              <input 
+                type="number" 
+                min="0" 
+                max="100" 
+                value={yellowThreshold} 
+                onChange={(e) => {
+                  const val = Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0));
+                  setYellowThreshold(val);
+                  localStorage.setItem('traffic_light_yellow', val.toString());
+                }}
+                className="w-10 bg-[#1E4468] border border-white/20 rounded text-center text-white py-0.5 font-bold"
+              />
+            ) : (
+              <span>{yellowThreshold}</span>
+            )}
+          </span>
+
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-400 block"></span> 
+            <span>Красный &lt; {yellowThreshold}</span>
+          </span>
         </div>
       </div>
 
-      {/* Real Calendar Grid */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-[#17344F]/40 shadow-xl" id="interactive-calendar-wrapper">
-        {/* Days Header */}
-        <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-3 border-b border-white/5">
-          <div>Пн</div>
-          <div>Вт</div>
-          <div>Ср</div>
-          <div>Чт</div>
-          <div>Пт</div>
-          <div className="text-red-400/80">Сб</div>
-          <div className="text-red-400/80">Вс</div>
-        </div>
+      {/* Real Calendar Grid / List View toggler */}
+      {viewMode === 'calendar' ? (
+        <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-[#17344F]/40 shadow-xl" id="interactive-calendar-wrapper">
+          {/* Days Header */}
+          <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-3 border-b border-white/5">
+            <div>Пн</div>
+            <div>Вт</div>
+            <div>Ср</div>
+            <div>Чт</div>
+            <div>Пт</div>
+            <div className="text-red-400/80">Сб</div>
+            <div className="text-red-400/80">Вс</div>
+          </div>
 
-        {/* Days Grid */}
-        <div className="grid grid-cols-7 gap-2 pt-3">
-          {daysGrid.map((day, idx) => {
-            if (!day.dayNum) {
-              return <div key={`empty-${idx}`} className="aspect-square bg-transparent rounded-xl" />;
+          {/* Days Grid */}
+          <div className="grid grid-cols-7 gap-2 pt-3">
+            {daysGrid.map((day, idx) => {
+              if (!day.dayNum) {
+                return <div key={`empty-${idx}`} className="aspect-square bg-transparent rounded-xl" />;
+              }
+
+              // Find reports submitted on this date
+              const dayReports = filteredSubmittedReports.filter(r => {
+                const repDate = r.timestamp.split('T')[0];
+                return repDate === day.dateStr;
+              });
+
+              const isToday = day.dateStr === new Date().toISOString().split('T')[0];
+
+              return (
+                <div 
+                  key={day.dateStr}
+                  className={`aspect-square p-2 rounded-xl border flex flex-col justify-between transition-all relative select-none ${
+                    isToday
+                      ? 'ring-2 ring-amber-400/70 border-amber-400/50 bg-[#1E4468]/90'
+                      : dayReports.length > 0 
+                        ? 'bg-[#1E4468]/60 border-amber-400/20 hover:border-amber-400/50 cursor-pointer shadow-md hover:scale-102' 
+                        : 'bg-[#17344F]/20 border-white/5 text-slate-500 hover:border-slate-400/20 hover:bg-[#17344F]/40 cursor-pointer'
+                  }`}
+                  onClick={() => {
+                    setActiveModalDate(day.dateStr);
+                    setModalReportIdx(0);
+                    if (dayReports.length > 0) {
+                      const rep = dayReports[0];
+                      setSelectedReport(rep);
+                      setManagerComment(rep.managerComment || '');
+                      setManagerTask(rep.managerTask || '');
+                      setFieldComments(rep.fieldComments || {});
+                      setSelectedReaction(rep.managerReaction || null);
+                    } else {
+                      setSelectedReport(null);
+                    }
+                  }}
+                >
+                  <div className="flex justify-between items-center w-full">
+                    <span className={`text-[11px] font-bold ${isToday ? 'text-amber-300 font-extrabold' : dayReports.length > 0 ? 'text-white' : 'text-slate-500'}`}>
+                      {day.dayNum}
+                    </span>
+                    {isToday && (
+                      <span className="text-[7px] font-extrabold uppercase bg-amber-400/20 text-amber-300 px-1 py-0.2 rounded tracking-wider">
+                        Сегодня
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Report status markers inside the cell */}
+                  <div className="flex flex-wrap gap-1 mt-1 justify-end">
+                    {dayReports.map((rep, rIdx) => {
+                      let dotColor = 'bg-emerald-400';
+                      const sColor = rep.statusColor || (rep.qualityScore >= greenThreshold ? 'green' : rep.qualityScore >= yellowThreshold ? 'yellow' : 'red');
+                      if (sColor === 'red') dotColor = 'bg-red-400';
+                      else if (sColor === 'yellow') dotColor = 'bg-amber-400';
+                      
+                      return (
+                        <span 
+                          key={rep.id} 
+                          className={`w-2.5 h-2.5 rounded-full ${dotColor} block animate-pulse`} 
+                          title={`${rep.employeeName}: ${rep.templateTitle} (${rep.qualityScore}/100)`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3 animate-fade-in" id="reports-list-wrapper">
+          {(() => {
+            const sortedReports = [...filteredSubmittedReports].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            
+            if (sortedReports.length === 0) {
+              return (
+                <div className="p-8 text-center bg-[#17344F]/20 rounded-3xl border border-white/5 text-slate-400 font-sans">
+                  Рапортов по выбранным фильтрам не найдено.
+                </div>
+              );
             }
 
-            // Find reports submitted on this date
-            const dayReports = filteredSubmittedReports.filter(r => {
-              const repDate = r.timestamp.split('T')[0];
-              return repDate === day.dateStr;
-            });
-
             return (
-              <div 
-                key={day.dateStr}
-                className={`aspect-square p-2 rounded-xl border flex flex-col justify-between transition-all relative select-none ${
-                  dayReports.length > 0 
-                    ? 'bg-[#1E4468]/60 border-amber-400/20 hover:border-amber-400/50 cursor-pointer shadow-md hover:scale-102' 
-                    : 'bg-[#17344F]/20 border-white/5 text-slate-500 hover:border-slate-400/20 hover:bg-[#17344F]/40 cursor-pointer'
-                }`}
-                onClick={() => {
-                  setActiveModalDate(day.dateStr);
-                  setModalReportIdx(0);
-                  if (dayReports.length > 0) {
-                    const rep = dayReports[0];
-                    setSelectedReport(rep);
-                    setManagerComment(rep.managerComment || '');
-                    setManagerTask(rep.managerTask || '');
-                    setFieldComments(rep.fieldComments || {});
-                    setSelectedReaction(rep.managerReaction || null);
-                  } else {
-                    setSelectedReport(null);
+              <div className="grid grid-cols-1 gap-3 font-sans">
+                {sortedReports.map((rep) => {
+                  const sColor = rep.statusColor || (rep.qualityScore >= greenThreshold ? 'green' : rep.qualityScore >= yellowThreshold ? 'yellow' : 'red');
+                  
+                  // Traffic light styles matching the requested design
+                  let cardStyle = 'border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-400/40 text-emerald-100';
+                  let dotColor = 'bg-emerald-400';
+                  let badgeStyle = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300';
+                  
+                  if (sColor === 'red') {
+                    cardStyle = 'border-red-500/25 bg-red-500/5 hover:bg-red-500/10 hover:border-red-400/40 text-red-100';
+                    dotColor = 'bg-red-400 animate-pulse';
+                    badgeStyle = 'bg-red-500/20 border-red-500/40 text-red-300';
+                  } else if (sColor === 'yellow') {
+                    cardStyle = 'border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-400/40 text-amber-100';
+                    dotColor = 'bg-amber-400';
+                    badgeStyle = 'bg-amber-500/15 border-amber-500/30 text-amber-200';
                   }
-                }}
-              >
-                <span className={`text-[11px] font-bold ${dayReports.length > 0 ? 'text-white' : 'text-slate-500'}`}>
-                  {day.dayNum}
-                </span>
 
-                {/* Report status markers inside the cell */}
-                <div className="flex flex-wrap gap-1 mt-1 justify-end">
-                  {dayReports.map((rep, rIdx) => {
-                    let dotColor = 'bg-emerald-400';
-                    if (rep.qualityScore < 50) dotColor = 'bg-red-400';
-                    else if (rep.qualityScore < 80) dotColor = 'bg-amber-300';
-                    
-                    return (
-                      <span 
-                        key={rep.id} 
-                        className={`w-2 h-2 rounded-full ${dotColor} block animate-pulse`} 
-                        title={`${rep.employeeName}: ${rep.templateTitle} (${rep.qualityScore}/100)`}
-                      />
-                    );
-                  })}
-                </div>
+                  return (
+                    <div 
+                      key={rep.id}
+                      onClick={() => {
+                        setActiveModalDate(rep.timestamp.split('T')[0]);
+                        // Find index of this report in day reports list to focus it
+                        const dayReps = filteredSubmittedReports.filter(dr => dr.timestamp.split('T')[0] === rep.timestamp.split('T')[0]);
+                        const idx = dayReps.findIndex(dr => dr.id === rep.id);
+                        setModalReportIdx(idx >= 0 ? idx : 0);
+                        setSelectedReport(rep);
+                        setManagerComment(rep.managerComment || '');
+                        setManagerTask(rep.managerTask || '');
+                        setFieldComments(rep.fieldComments || {});
+                        setSelectedReaction(rep.managerReaction || null);
+                      }}
+                      className={`p-4 sm:p-5 rounded-3xl border ${cardStyle} flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all cursor-pointer hover:translate-x-1 duration-150 shadow-sm`}
+                    >
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
+                          <strong className="text-sm text-white font-bold">{rep.employeeName}</strong>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {new Date(rep.timestamp).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 font-semibold">{rep.templateTitle}</p>
+                        {rep.aiSummary && (
+                          <p className="text-[11px] text-slate-400 italic line-clamp-1 mt-1">"{rep.aiSummary}"</p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-4 self-end sm:self-center shrink-0">
+                        <div className="text-right">
+                          <span className="block text-[8px] uppercase tracking-wider text-slate-400 font-bold">Оценка ИИ</span>
+                          <span className={`px-2 py-1 rounded-xl text-xs font-mono font-bold border ${badgeStyle}`}>
+                            {rep.qualityScore}/100
+                          </span>
+                        </div>
+                        <span className="px-3.5 py-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[#F4EE8E] text-[10px] font-bold uppercase tracking-wider transition-all">
+                          Аудит
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             );
-          })}
+          })()}
         </div>
-      </div>
+      )}
 
       {/* MODAL DETAILED DATE REPORTS VIEWER */}
       {activeModalDate && (() => {
@@ -397,8 +601,9 @@ ${Object.entries(selectedReport.answers).map(([k, v]) => `- ${k}: ${v}`).join('\
                         {dayReports.map((rep, idx) => {
                           const isActive = idx === modalReportIdx;
                           let scoreColor = 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5';
-                          if (rep.qualityScore < 50) scoreColor = 'text-red-400 border-red-500/20 bg-red-500/5';
-                          else if (rep.qualityScore < 80) scoreColor = 'text-amber-300 border-amber-300/20 bg-amber-500/5';
+                          const sColor = rep.statusColor || (rep.qualityScore >= greenThreshold ? 'green' : rep.qualityScore >= yellowThreshold ? 'yellow' : 'red');
+                          if (sColor === 'red') scoreColor = 'text-red-400 border-red-500/20 bg-red-500/5';
+                          else if (sColor === 'yellow') scoreColor = 'text-amber-300 border-amber-300/20 bg-amber-500/5';
 
                           return (
                             <button
@@ -457,12 +662,39 @@ ${Object.entries(selectedReport.answers).map(([k, v]) => `- ${k}: ${v}`).join('\
                               <p className="text-[10px] text-slate-400 font-mono">ID рапорта: #{selectedReport.id} | Сдано в {new Date(selectedReport.timestamp).toLocaleString('ru-RU')}</p>
                             </div>
                             
-                            {/* Score Card */}
-                            <div className="text-center bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-xl">
-                              <span className="block text-[8px] text-emerald-300 uppercase tracking-wider font-bold">Оценка ИИ</span>
-                              <span className="text-sm font-extrabold font-mono text-emerald-400">{selectedReport.qualityScore}/100</span>
-                            </div>
+                            {/* Score Card with dynamic traffic light coloring */}
+                            {(() => {
+                              const sColor = selectedReport.statusColor || (selectedReport.qualityScore >= greenThreshold ? 'green' : selectedReport.qualityScore >= yellowThreshold ? 'yellow' : 'red');
+                              let bgBorderText = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 text-emerald-300';
+                              if (sColor === 'red') bgBorderText = 'bg-red-500/15 border-red-500/40 text-red-400 text-red-300';
+                              else if (sColor === 'yellow') bgBorderText = 'bg-amber-500/15 border-amber-500/40 text-amber-300 text-amber-200';
+                              
+                              const parts = bgBorderText.split(' ');
+                              return (
+                                <div className={`text-center ${parts[0]} border ${parts[1]} px-3 py-1.5 rounded-xl min-w-[90px]`}>
+                                  <span className={`block text-[8px] uppercase tracking-wider font-bold ${parts[3]}`}>Оценка ИИ</span>
+                                  <span className={`text-sm font-extrabold font-mono ${parts[2]}`}>{selectedReport.qualityScore}/100</span>
+                                </div>
+                              );
+                            })()}
                           </div>
+
+                          {/* AI Urgent Attention Warning (Requirement 4) */}
+                          {(() => {
+                            const sColor = selectedReport.statusColor || (selectedReport.qualityScore >= greenThreshold ? 'green' : selectedReport.qualityScore >= yellowThreshold ? 'yellow' : 'red');
+                            if (sColor === 'red') {
+                              return (
+                                <div className="p-3.5 rounded-2xl border border-red-500/30 bg-red-500/10 text-red-200 flex items-start gap-2.5 animate-pulse relative z-10">
+                                  <AlertTriangle className="text-red-400 flex-shrink-0 mt-0.5" size={16} />
+                                  <div className="space-y-0.5">
+                                    <span className="block text-xs font-bold uppercase tracking-wider text-red-300">⚠️ ТРЕБУЕТ СРОЧНОГО ВНИМАНИЯ</span>
+                                    <p className="text-[10px] text-red-300/90 leading-relaxed">ИИ пометил этот рапорт красным цветом. Требуется детальное рассмотрение показателей сотрудника или оперативная обратная связь от руководителя.</p>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
 
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Answers Panel */}
@@ -545,6 +777,38 @@ ${Object.entries(selectedReport.answers).map(([k, v]) => `- ${k}: ${v}`).join('\
                                           }`}
                                         >
                                           {react}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Requirement 5: Quick-click manager feedback templates */}
+                                  <div className="space-y-1.5">
+                                    <span className="block text-[10px] text-amber-200 font-bold uppercase tracking-wider">⚡️ Быстрый вердикт в 1 клик (Шаблоны):</span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                      {[
+                                        { text: 'Отлично! Отчет полностью принят без замечаний, великолепная работа.', rating: '🔥 Огонь', react: '✅ Принято' },
+                                        { text: 'Смена отработана отлично, все поставленные задачи выполнены.', rating: '👏 Класс', react: '✅ Принято' },
+                                        { text: 'Отчет принят. На следующей смене уделите больше внимания деталям.', rating: '⚠️ Внимание', react: '⚠️ Внимание' },
+                                        { text: 'Недостаточно подробностей. Жду детальный разбор смены завтра утром!', rating: '⚠️ Внимание', react: '⚠️ Внимание' }
+                                      ].map((item, tIdx) => (
+                                        <button
+                                          key={tIdx}
+                                          type="button"
+                                          onClick={() => {
+                                            setManagerComment(item.text);
+                                            handleAddReaction(item.rating);
+                                          }}
+                                          className="p-2.5 rounded-xl bg-[#1E4468]/50 hover:bg-[#1E4468]/80 text-left text-[10px] text-slate-200 border border-white/5 hover:border-amber-400/30 transition-all cursor-pointer leading-tight"
+                                          title={item.text}
+                                        >
+                                          <span className="font-bold block text-[#F4EE8E] mb-0.5">
+                                            {tIdx === 0 && '🟢 Идеальный отчет'}
+                                            {tIdx === 1 && '🔵 Все выполнено'}
+                                            {tIdx === 2 && '🟡 Требует правок'}
+                                            {tIdx === 3 && '🔴 Слишком кратко'}
+                                          </span>
+                                          <span className="line-clamp-1 text-slate-300 text-[9px]">{item.text}</span>
                                         </button>
                                       ))}
                                     </div>

@@ -514,7 +514,7 @@ export default function CabinetEmployees({
                       ) : (
                         <>
                           <Sparkles size={11} className="text-purple-300" />
-                          <span>Помощь нейросети ii_rr в заполнении обязанностей</span>
+                          <span>Помощь нейросети RR в заполнении обязанностей</span>
                         </>
                       )}
                     </button>

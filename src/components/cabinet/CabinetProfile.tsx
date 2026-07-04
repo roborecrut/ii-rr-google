@@ -20,9 +20,9 @@ export default function CabinetProfile({
   setUserPosition,
   onSaveProfile
 }: CabinetProfileProps) {
-  // Construct referral link strictly based on user referralCode with official domain
+  // Construct referral link strictly based on user id with official domain
   const refLink = currentUser 
-    ? `https://ii-rr.online/invite?org=rr-1552&ref=${currentUser.referralCode}` 
+    ? `https://ii-rr.online/invite?org=rr-1552&ref=${currentUser.id}` 
     : `https://ii-rr.online/invite?org=rr-1552&ref=partner`;
 
   return (
@@ -148,11 +148,6 @@ export default function CabinetProfile({
                       Копировать
                     </button>
                   </div>
-                </div>
-
-                <div>
-                  <span className="block text-[10px] text-slate-400">Ваш промокод (Latin, lowercase):</span>
-                  <p className="text-sm font-mono font-bold text-white mt-0.5">{currentUser?.referralCode || 'rrpartner'}</p>
                 </div>
               </div>
 

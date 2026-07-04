@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { 
   User, Building, Layers, Users, FileText, Calendar as CalendarIcon, 
   Clock, BarChart3, Settings, CreditCard, Shield, Send, Mic, Sparkles, 
-  Plus, Trash2, Check, HelpCircle, Edit3, Save, ArrowUpRight, MessageSquare, AlertCircle, Share2, Bell, X, Landmark
+  Plus, Trash2, Check, HelpCircle, Edit3, Save, ArrowUpRight, MessageSquare, AlertCircle, Share2, Bell, X, Landmark, Menu, Bot
 } from 'lucide-react';
 import { 
   UserRole, UserProfile, CompanyInfo, Department, ReportTemplate, 
@@ -49,28 +50,86 @@ const DEFAULT_TEMPLATES: ReportTemplate[] = [
   {
     id: 'tpl-1',
     departmentId: 'dep-1',
-    title: 'План на день (Разработка)',
+    title: 'План на день (Отдел Разработки)',
     type: 'PLAN_DAY',
     fields: [
-      { id: 'q1', label: 'Каковы ваши главные задачи на сегодня?', type: 'text', required: true },
+      { id: 'q1', label: 'Каковы ваши главные задачи на сегодня?', type: 'voice', required: true },
       { id: 'q2', label: 'Какие трудности или зависимости могут возникнуть?', type: 'voice', required: false },
       { id: 'q3', label: 'Ожидаемые рабочие часы за смену (число)', type: 'number', required: true }
     ],
     employeeIds: ['emp-1', 'emp-2'],
-    managerId: 'mgr-1'
+    managerId: 'mgr-1',
+    customPrompt: 'Проверь соответствие плана архитектурным стандартам и полноту декомпозиции задач.',
+    reminderMinutes: 15,
+    reminderText: 'Внимание! Напоминаем о сдаче ежедневного плана. Пожалуйста, заполните рапорт в течение 15 минут.'
   },
   {
     id: 'tpl-2',
     departmentId: 'dep-1',
-    title: 'Факт за день (Разработка)',
+    title: 'Факт за день (Отдел Разработки)',
     type: 'FACT_DAY',
     fields: [
-      { id: 'q4', label: 'Что было сделано по факту за сегодня?', type: 'voice', required: true },
+      { id: 'q4', label: 'Что было сделано по факту за сегодня?', type: 'text_paragraph', required: true },
       { id: 'q5', label: 'Все ли задачи из плана выполнены?', type: 'checkbox', required: true },
-      { id: 'q6', label: 'Сколько времени затрачено на багфикс (в минутах)?', type: 'number', required: false }
+      { id: 'q6', label: 'Загрузить скриншот коммита / пуллреквеста', type: 'image', required: false },
+      { id: 'q7', label: 'Ссылка на ветку или задачу в Jira', type: 'text_short', required: false }
     ],
     employeeIds: ['emp-1', 'emp-2'],
-    managerId: 'mgr-1'
+    managerId: 'mgr-1',
+    customPrompt: 'Обрати внимание на то, решены ли проблемы предыдущего дня и указаны ли конкретные коммиты/результаты.',
+    reminderMinutes: 30,
+    reminderText: 'Добрый вечер! Время сдавать факт за сегодня. Опоздание более 30 минут влияет на оценку.'
+  },
+  {
+    id: 'tpl-3',
+    departmentId: 'dep-2',
+    title: 'Еженедельный отчет по рекламе (Отдел Маркетинга)',
+    type: 'WEEKLY',
+    fields: [
+      { id: 'q8', label: 'Список запущенных рекламных кампаний и креативов за неделю', type: 'list', required: true },
+      { id: 'q9', label: 'Итоговый расход рекламного бюджета (в рублях)', type: 'number', required: true },
+      { id: 'q10', label: 'Количество полученных лидов и средний CPA', type: 'text_short', required: true },
+      { id: 'q11', label: 'Загрузить еженедельный медиа-отчет (PDF/XLS)', type: 'document', required: false }
+    ],
+    employeeIds: ['emp-3'],
+    managerId: 'mgr-2',
+    customPrompt: 'Особое внимание удели стоимости лида (CPA), CTR рекламных кампаний и выполнению медиаплана.',
+    reminderMinutes: 60,
+    reminderText: 'Коллеги, не забываем предоставить недельный отчет по маркетингу. Срок сдачи истекает.'
+  },
+  {
+    id: 'tpl-4',
+    departmentId: 'dep-3',
+    title: 'Ежемесячный аудит сделок и выручки (Отдел Продаж)',
+    type: 'MONTHLY',
+    fields: [
+      { id: 'q12', label: 'Итоговая выручка за месяц по закрытым сделкам (руб)', type: 'number', required: true },
+      { id: 'q13', label: 'Какая конверсия из лида в оплату была достигнута (%)', type: 'number', required: true },
+      { id: 'q14', label: 'Список ключевых клиентов, заключивших договора', type: 'checkboxes', required: true },
+      { id: 'q15', label: 'Загрузить скан подписанного акта сверки', type: 'photo', required: false },
+      { id: 'q16', label: 'Главные выводы и узкие места в воронке продаж за месяц', type: 'text_paragraph', required: true }
+    ],
+    employeeIds: ['emp-4'],
+    managerId: 'mgr-3',
+    customPrompt: 'Проанализируй выполнение плана по выручке, конверсию на этапах воронки и средний чек.',
+    reminderMinutes: 120,
+    reminderText: 'Важно! Ждем ежемесячный отчет по продажам. Пожалуйста, загрузите акты сверки и показатели.'
+  },
+  {
+    id: 'tpl-5',
+    departmentId: 'dep-1',
+    title: 'Рапорт о дежурстве (Служба Поддержки)',
+    type: 'FACT_DAY',
+    fields: [
+      { id: 'q17', label: 'Количество принятых и обработанных обращений за смену', type: 'number', required: true },
+      { id: 'q18', label: 'Были ли критические сбои оборудования или сервисов?', type: 'checkbox', required: true },
+      { id: 'q19', label: 'Аудиозапись утренней передачи смены (голосовой отчет)', type: 'voice', required: false }
+    ],
+    employeeIds: ['emp-1'],
+    managerId: 'mgr-1',
+    customPrompt: 'Проверь среднее время ответа (SLA) и количество незакрытых тикетов повышенной сложности.',
+    reminderMinutes: 15,
+    reminderText: 'Системное уведомление: Напоминаем сдать утренний рапорт дежурной смены поддержки.'
   }
 ];
 
@@ -141,6 +200,7 @@ export default function CabinetPage({
 }: CabinetPageProps) {
   // Active Tab state
   const [activeTab, setActiveTab] = useState<string>('profile');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // App Data States (synced with backend state.json)
   const [company, setCompany] = useState<CompanyInfo>(DEFAULT_COMPANY);
@@ -173,6 +233,9 @@ export default function CabinetPage({
   const [topUpSeats, setTopUpSeats] = useState(5);
   const [promptRecs, setPromptRecs] = useState('Анализируй содержательность отчета, оценивай Quality Score от 1 до 100 и пиши 3 совета для улучшения работы.');
   const [promptSummary, setPromptSummary] = useState('Обобщи выполненные задачи, выпиши все блокеры и сформируй сводку для директора.');
+  const [promptFastFill, setPromptFastFill] = useState('На основе свободного текста пользователя заполни соответствующие поля формы отчета. Извлеки задачи, результаты и статус.');
+  const [promptManagerFeedback, setPromptManagerFeedback] = useState('Ты — мудрый и опытный генеральный директор. Проанализируй этот отчет сотрудника и составь краткую, конструктивную, мотивирующую рецензию/обратную связь.');
+  const [promptFieldsGeneration, setPromptFieldsGeneration] = useState('Ты — профессиональный ИИ-методолог по отчетности. Сгенерируй список важнейших вопросов для рапорта на основе темы отчета.');
 
   // Custom informational withdrawal/refund window state
   const [isCashOutModalOpen, setIsCashOutModalOpen] = useState(false);
@@ -193,7 +256,7 @@ export default function CabinetPage({
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
-    const userSlug = currentUser ? (currentUser.email.split('@')[0] || 'user') : 'user';
+    const userSlug = currentUser ? currentUser.id : 'user';
     onNavigate(`/cabinet/${userSlug}/${tab}`);
   };
 
@@ -214,6 +277,11 @@ export default function CabinetPage({
             setTariff(data.tariff || { activeEmployeesCount: 15, expiresAt: '2026-08-01', balance: 3550 });
             setMockEmployees(data.mockEmployees || DEFAULT_EMPLOYEES);
             if (data.crmCompanies) setCrmCompanies(data.crmCompanies);
+            if (data.promptRecs) setPromptRecs(data.promptRecs);
+            if (data.promptSummary) setPromptSummary(data.promptSummary);
+            if (data.promptFastFill) setPromptFastFill(data.promptFastFill);
+            if (data.promptManagerFeedback) setPromptManagerFeedback(data.promptManagerFeedback);
+            if (data.promptFieldsGeneration) setPromptFieldsGeneration(data.promptFieldsGeneration);
           }
         }
       } catch (err) {
@@ -222,6 +290,31 @@ export default function CabinetPage({
     }
     loadState();
   }, []);
+
+  const handleSavePrompts = (recs: string, summary: string, fastFill: string, managerFeedback: string, fieldsGen: string) => {
+    setPromptRecs(recs);
+    setPromptSummary(summary);
+    setPromptFastFill(fastFill);
+    setPromptManagerFeedback(managerFeedback);
+    setPromptFieldsGeneration(fieldsGen);
+    saveStateToServer({
+      company,
+      departments,
+      templates,
+      reports,
+      transactions,
+      notifications,
+      tariff,
+      crmCompanies,
+      mockEmployees,
+      promptRecs: recs,
+      promptSummary: summary,
+      promptFastFill: fastFill,
+      promptManagerFeedback: managerFeedback,
+      promptFieldsGeneration: fieldsGen
+    });
+    alert('Настройки промптов нейросети успешно зафиксированы и сохранены!');
+  };
 
   // Save state helper
   const saveStateToServer = async (updatedData: any) => {
@@ -454,7 +547,7 @@ export default function CabinetPage({
   const unreadNotificationsCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <div className="w-full text-white bg-gradient-to-b from-[#17344F] via-[#1E4468] to-[#265582] font-sans p-4 sm:p-6 min-h-screen relative" id="cabinet-root">
+    <div className="w-full text-white bg-transparent font-sans p-4 sm:p-6 min-h-screen relative" id="cabinet-root">
       
       {/* DEVELOPMENT MOCK ROLE SELECTOR BAR */}
       <div className="mx-auto max-w-7xl mb-6 p-4 rounded-2xl bg-[#1E4468]/30 border border-amber-200/25 flex flex-wrap items-center justify-between gap-4" id="role-selector-bar">
@@ -489,10 +582,257 @@ export default function CabinetPage({
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start" id="cabinet-layout-grid">
+      {/* MOBILE HEADER */}
+      <div className="lg:hidden flex items-center justify-between p-3.5 bg-[#17344F]/90 backdrop-blur-md border border-white/10 rounded-2xl mb-4" id="mobile-cabinet-header">
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-2 -ml-2 text-slate-300 hover:text-white transition-colors cursor-pointer"
+          title="Открыть меню"
+        >
+          <Menu size={20} />
+        </button>
+        <span className="text-xs font-extrabold uppercase tracking-widest text-[#F4EE8E] font-mono">
+          {activeTab === 'profile' ? 'Профиль' :
+           activeTab === 'company' ? 'Компания' :
+           activeTab === 'departments' ? 'Отделы' :
+           activeTab === 'employees' ? 'Сотрудники' :
+           activeTab === 'reports_builder' ? 'Конструктор' :
+           activeTab === 'fill_report' ? 'Заполнение' :
+           activeTab === 'calendar' ? 'Календарь' :
+           activeTab === 'schedules_builder' ? 'Графики' :
+           activeTab === 'employee_schedule' ? 'Мой график' :
+           activeTab === 'analytics' ? 'Аналитика' :
+           activeTab === 'notifications' ? 'Оповещения' :
+           activeTab === 'tariff' ? 'Тариф' :
+           activeTab === 'settings' ? 'Промпты' :
+           activeTab === 'crm' ? 'CRM' : 'ИИ Рапорт'}
+        </span>
+        <div className="w-8 h-8 rounded-full bg-[#1E4468] border border-[#E7C768] flex items-center justify-center font-bold text-xs text-[#F4EE8E]">
+          {currentUser?.name.charAt(0) || 'U'}
+        </div>
+      </div>
+
+      {/* MOBILE DRAWER OVERLAY */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex" id="mobile-menu-drawer">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+          
+          <div className="relative w-4/5 max-w-xs bg-[#17344F]/95 backdrop-blur-xl border-r border-white/10 h-full p-5 flex flex-col justify-between overflow-y-auto z-10">
+            <div>
+              <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#17344F]/80 border border-[#E7C768] flex items-center justify-center font-extrabold text-[#F4EE8E]">
+                    {currentUser?.name.charAt(0) || 'U'}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white leading-tight">{currentUser?.name || 'Пользователь'}</h4>
+                    <p className="text-[9px] text-slate-400 font-mono">ID: {currentUser?.id || '88371947'}</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <nav className="flex flex-col gap-1 text-xs">
+                {/* Profile Tab */}
+                <button
+                  onClick={() => { handleTabClick('profile'); setIsMobileMenuOpen(false); }}
+                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                    activeTab === 'profile' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                  }`}
+                >
+                  <User size={15} />
+                  Профиль
+                </button>
+
+                {/* Company (Directors and Admins Only) */}
+                {(currentUser?.role === UserRole.DIRECTOR || currentUser?.role === UserRole.ADMIN) && (
+                  <button
+                    onClick={() => { handleTabClick('company'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'company' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <Building size={15} />
+                    Компания
+                  </button>
+                )}
+
+                {/* Departments (All except Employee) */}
+                {currentUser?.role !== UserRole.EMPLOYEE && (
+                  <button
+                    onClick={() => { handleTabClick('departments'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'departments' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <Layers size={15} />
+                    Отделы
+                  </button>
+                )}
+
+                {/* Employees (All except Employee) */}
+                {currentUser?.role !== UserRole.EMPLOYEE && (
+                  <button
+                    onClick={() => { handleTabClick('employees'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'employees' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <Users size={15} />
+                    Сотрудники
+                  </button>
+                )}
+
+                {/* Reports Template Builder (All except Employee) */}
+                {currentUser?.role !== UserRole.EMPLOYEE && (
+                  <button
+                    onClick={() => { handleTabClick('reports_builder'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'reports_builder' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <Edit3 size={15} />
+                    Конструктор отчетов
+                  </button>
+                )}
+
+                {/* Fill Reports (Employee Only) */}
+                {currentUser?.role === UserRole.EMPLOYEE && (
+                  <button
+                    onClick={() => { handleTabClick('fill_report'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'fill_report' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <FileText size={15} />
+                    Заполнить отчет
+                  </button>
+                )}
+
+                {/* Calendar History (All) */}
+                <button
+                  onClick={() => { handleTabClick('calendar'); setIsMobileMenuOpen(false); }}
+                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                    activeTab === 'calendar' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                  }`}
+                >
+                  <CalendarIcon size={15} />
+                  Календарь отчетов
+                </button>
+
+                {/* Work Schedules (Managers / Directors / Admins) */}
+                {currentUser?.role !== UserRole.EMPLOYEE && (
+                  <button
+                    onClick={() => { handleTabClick('schedules_builder'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'schedules_builder' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <Clock size={15} />
+                    Графики работы
+                  </button>
+                )}
+
+                {/* Read-Only Work Schedule (Employee Only) */}
+                {currentUser?.role === UserRole.EMPLOYEE && (
+                  <button
+                    onClick={() => { handleTabClick('employee_schedule'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'employee_schedule' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <Clock size={15} />
+                    Мой график работы
+                  </button>
+                )}
+
+                {/* Analytics (All except Employee) */}
+                {currentUser?.role !== UserRole.EMPLOYEE && (
+                  <button
+                    onClick={() => { handleTabClick('analytics'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'analytics' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <BarChart3 size={15} />
+                    Аналитика ИИ
+                  </button>
+                )}
+
+                {/* Notifications (All) */}
+                <button
+                  onClick={() => {
+                    handleTabClick('notifications');
+                    handleMarkAllNotificationsRead();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                    activeTab === 'notifications' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                  }`}
+                >
+                  <Bell size={15} />
+                  <span>Уведомления</span>
+                  {unreadNotificationsCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white font-extrabold font-mono text-[9px] px-2 py-0.5 rounded-full">
+                      {unreadNotificationsCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Tariff (Directors and Admins Only) */}
+                {(currentUser?.role === UserRole.DIRECTOR || currentUser?.role === UserRole.ADMIN) && (
+                  <button
+                    onClick={() => { handleTabClick('tariff'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'tariff' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <CreditCard size={15} />
+                    Тариф
+                  </button>
+                )}
+
+                {/* Settings Prompts (Directors only) */}
+                {(currentUser?.role === UserRole.DIRECTOR) && (
+                  <button
+                    onClick={() => { handleTabClick('settings'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'settings' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <Settings size={15} />
+                    Настройки ИИ
+                  </button>
+                )}
+
+                {/* CRM (Admins only) */}
+                {(currentUser?.role === UserRole.ADMIN) && (
+                  <button
+                    onClick={() => { handleTabClick('crm'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'crm' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <Shield size={15} />
+                    CRM Админа
+                  </button>
+                )}
+              </nav>
+            </div>
+            
+            <div className="pt-4 border-t border-white/5 text-center text-[10px] text-slate-500 font-mono">
+              ИИ Рапорт © 2026
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-20 lg:pb-0" id="cabinet-layout-grid">
         
         {/* SIDEBAR NAVIGATION */}
-        <aside className="lg:col-span-3 rounded-2xl border border-white/10 bg-[#17344F]/40 p-4 space-y-4" id="cabinet-sidebar">
+        <aside className="hidden lg:block lg:col-span-3 rounded-2xl border border-white/10 bg-[#17344F]/40 p-4 space-y-4" id="cabinet-sidebar">
           
           <div className="p-3 border-b border-white/5 text-center sm:text-left flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#17344F]/80 border border-[#E7C768] flex items-center justify-center font-extrabold text-[#F4EE8E] overflow-hidden shadow-inner">
@@ -697,7 +1037,14 @@ export default function CabinetPage({
           {/* Glass layout reflection */}
           <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/5 to-transparent rounded-2xl" />
 
-          {/* Tab 1: PROFILE */}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="w-full h-full"
+          >
+            {/* Tab 1: PROFILE */}
           {activeTab === 'profile' && (
             <CabinetProfile 
               currentUser={currentUser}
@@ -774,6 +1121,7 @@ export default function CabinetPage({
               notifications={notifications}
               tariff={tariff}
               crmCompanies={crmCompanies}
+              promptFieldsGeneration={promptFieldsGeneration}
             />
           )}
 
@@ -800,6 +1148,8 @@ export default function CabinetPage({
               tariff={tariff}
               crmCompanies={crmCompanies}
               mockEmployees={mockEmployees}
+              promptRecs={promptRecs}
+              promptFastFill={promptFastFill}
             />
           )}
 
@@ -822,6 +1172,7 @@ export default function CabinetPage({
               notifications={notifications}
               tariff={tariff}
               crmCompanies={crmCompanies}
+              promptManagerFeedback={promptManagerFeedback}
             />
           )}
 
@@ -830,6 +1181,7 @@ export default function CabinetPage({
             <CabinetScheduleGantt 
               currentUser={currentUser}
               mockEmployees={mockEmployees}
+              reports={reports}
             />
           )}
 
@@ -840,6 +1192,7 @@ export default function CabinetPage({
               departments={departments}
               triggerAI={triggerAI}
               mockEmployees={mockEmployees}
+              promptSummary={promptSummary}
             />
           )}
 
@@ -882,6 +1235,13 @@ export default function CabinetPage({
               setPromptRecs={setPromptRecs}
               promptSummary={promptSummary}
               setPromptSummary={setPromptSummary}
+              promptFastFill={promptFastFill}
+              setPromptFastFill={setPromptFastFill}
+              promptManagerFeedback={promptManagerFeedback}
+              setPromptManagerFeedback={setPromptManagerFeedback}
+              promptFieldsGeneration={promptFieldsGeneration}
+              setPromptFieldsGeneration={setPromptFieldsGeneration}
+              onSavePrompts={handleSavePrompts}
             />
           )}
 
@@ -904,6 +1264,7 @@ export default function CabinetPage({
             />
           )}
 
+          </motion.div>
         </main>
       </div>
 
@@ -1101,6 +1462,107 @@ export default function CabinetPage({
           </div>
         </div>
       )}
+
+      {/* MOBILE BOTTOM NAVBAR */}
+      <nav className="fixed bottom-3 left-4 right-4 z-40 bg-[#17344F]/95 backdrop-blur-md border border-white/10 rounded-2xl flex justify-around py-2 px-1 shadow-2xl lg:hidden animate-slide-in-bottom" id="mobile-bottom-navbar">
+        {currentUser?.role === UserRole.EMPLOYEE ? (
+          <>
+            <button
+              onClick={() => handleTabClick('fill_report')}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'fill_report' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <FileText size={15} />
+              <span className="text-[9px] font-bold">Ввод</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('employee_schedule')}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'employee_schedule' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Clock size={15} />
+              <span className="text-[9px] font-bold">График</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('calendar')}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <CalendarIcon size={15} />
+              <span className="text-[9px] font-bold">Рапорты</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('profile')}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <User size={15} />
+              <span className="text-[9px] font-bold">Профиль</span>
+            </button>
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('open-ai-assistant'));
+              }}
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-amber-200 hover:text-white transition-all cursor-pointer"
+            >
+              <Bot size={15} className="animate-pulse" />
+              <span className="text-[9px] font-bold">ИИ Бот</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => handleTabClick('calendar')}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <CalendarIcon size={15} />
+              <span className="text-[9px] font-bold">Рапорты</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('employees')}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'employees' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Users size={15} />
+              <span className="text-[9px] font-bold">Команда</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('analytics')}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'analytics' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <BarChart3 size={15} />
+              <span className="text-[9px] font-bold">Анализ</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('profile')}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <User size={15} />
+              <span className="text-[9px] font-bold">Профиль</span>
+            </button>
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('open-ai-assistant'));
+              }}
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-amber-200 hover:text-white transition-all cursor-pointer"
+            >
+              <Bot size={15} className="animate-pulse" />
+              <span className="text-[9px] font-bold">ИИ Бот</span>
+            </button>
+          </>
+        )}
+      </nav>
 
     </div>
   );

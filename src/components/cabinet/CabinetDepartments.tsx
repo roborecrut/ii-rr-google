@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Users, Check, X, Building, Info, MessageSquare, HelpCircle, Activity, Link, Share2, Landmark, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Edit2, Users, Check, X, Building, Info, MessageSquare, HelpCircle, Activity, Link, Share2, Landmark, RefreshCw, GripVertical } from 'lucide-react';
 import { Department, UserProfile, UserRole } from '../../types';
 
 interface CabinetDepartmentsProps {
@@ -240,6 +240,24 @@ export default function CabinetDepartments({
     setDragStartOffset({ x: cursorX, y: cursorY });
   };
 
+  // Touch start handler for mobile positioning
+  const handleNodeTouchStart = (e: React.TouchEvent, depId: string) => {
+    e.stopPropagation();
+    const dep = departments.find(d => d.id === depId);
+    if (!dep || !canvasRef.current) return;
+
+    const canvasBounds = canvasRef.current.getBoundingClientRect();
+    const nodeX = dep.x !== undefined ? dep.x : 0;
+    const nodeY = dep.y !== undefined ? dep.y : 0;
+
+    const touch = e.touches[0];
+    const cursorX = touch.clientX - canvasBounds.left - nodeX;
+    const cursorY = touch.clientY - canvasBounds.top - nodeY;
+
+    setDraggedDeptId(depId);
+    setDragStartOffset({ x: cursorX, y: cursorY });
+  };
+
   // Drag move handler on the general sandbox canvas
   const handleCanvasMouseMove = (e: React.MouseEvent) => {
     if (!draggedDeptId || !canvasRef.current) return;
@@ -258,8 +276,42 @@ export default function CabinetDepartments({
     setDepartments(updated);
   };
 
+  // Touch move handler on the general sandbox canvas
+  const handleCanvasTouchMove = (e: React.TouchEvent) => {
+    if (!draggedDeptId || !canvasRef.current) return;
+    
+    // Prevent default scrolling behaviour only when actively dragging a department card
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+    
+    const canvasBounds = canvasRef.current.getBoundingClientRect();
+    const touch = e.touches[0];
+
+    // New calculated positions within limits
+    const newX = Math.max(20, Math.min(touch.clientX - canvasBounds.left - dragStartOffset.x, 1050));
+    const newY = Math.max(20, Math.min(touch.clientY - canvasBounds.top - dragStartOffset.y, 650));
+
+    const updated = departments.map(d => {
+      if (d.id === draggedDeptId) {
+        return { ...d, x: newX, y: newY };
+      }
+      return d;
+    });
+    setDepartments(updated);
+  };
+
   // Drag release
   const handleCanvasMouseUp = () => {
+    if (draggedDeptId) {
+      setDraggedDeptId(null);
+      // Save finalized layout state to server persistence
+      saveStateToServer({ company, departments, templates, reports, transactions, notifications, tariff, crmCompanies });
+    }
+  };
+
+  // Touch release
+  const handleCanvasTouchEnd = () => {
     if (draggedDeptId) {
       setDraggedDeptId(null);
       // Save finalized layout state to server persistence
@@ -411,80 +463,96 @@ export default function CabinetDepartments({
             <Activity size={12} className="text-amber-200" />
             Интерактивный холст структуры (Drag and Drop):
           </span>
-          <span className="text-[10px] text-slate-500">Зажмите левую кнопку мыши на карточке для перемещения по холсту</span>
+          <span className="text-[10px] text-slate-500">Зажмите карточку для перемещения по холсту. На мобильных можно прокручивать холст пальцем.</span>
         </div>
 
-        <div 
-          ref={canvasRef}
-          onMouseMove={handleCanvasMouseMove}
-          onMouseUp={handleCanvasMouseUp}
-          onMouseLeave={handleCanvasMouseUp}
-          className="relative w-full h-[500px] border border-white/10 rounded-3xl bg-slate-950/45 overflow-hidden shadow-inner cursor-grab active:cursor-grabbing select-none"
-          id="departments-stage-canvas"
-        >
-          {/* SVG Backplate to Draw Connecting Lines */}
-          <svg className="absolute inset-0 pointer-events-none w-full h-full z-0">
-            <defs>
-              <linearGradient id="glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#F4EE8E" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#D99E41" stopOpacity="0.4" />
-              </linearGradient>
-            </defs>
-            
-            {/* Draw connections from parent coords to child coords */}
-            {departments.map(dep => {
-              if (!dep.parentId) return null;
-              const parent = departments.find(d => d.id === dep.parentId);
-              if (!parent) return null;
+        <div className="w-full overflow-auto border border-white/10 rounded-3xl bg-slate-950/45 shadow-inner" id="departments-stage-scroll-wrapper">
+          <div 
+            ref={canvasRef}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
+            onMouseLeave={handleCanvasMouseUp}
+            onTouchMove={handleCanvasTouchMove}
+            onTouchEnd={handleCanvasTouchEnd}
+            className="relative w-[1300px] h-[750px] cursor-grab active:cursor-grabbing select-none"
+            id="departments-stage-canvas"
+          >
+            {/* SVG Backplate to Draw Connecting Lines */}
+            <svg className="absolute inset-0 pointer-events-none w-full h-full z-0">
+              <defs>
+                <linearGradient id="glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#F4EE8E" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="#D99E41" stopOpacity="0.4" />
+                </linearGradient>
+              </defs>
+              
+              {/* Draw connections from parent coords to child coords */}
+              {departments.map(dep => {
+                if (!dep.parentId) return null;
+                const parent = departments.find(d => d.id === dep.parentId);
+                if (!parent) return null;
 
-              const startCoords = getCoordinates(parent, departments.indexOf(parent));
-              const endCoords = getCoordinates(dep, departments.indexOf(dep));
+                const startCoords = getCoordinates(parent, departments.indexOf(parent));
+                const endCoords = getCoordinates(dep, departments.indexOf(dep));
 
-              // Center coordinates inside 260px wide cards and 140px tall cards
-              const startX = startCoords.x + 130;
-              const startY = startCoords.y + 70;
-              const endX = endCoords.x + 130;
-              const endY = endCoords.y + 70;
+                // Center coordinates inside 260px wide cards and 140px tall cards
+                const startX = startCoords.x + 130;
+                const startY = startCoords.y + 70;
+                const endX = endCoords.x + 130;
+                const endY = endCoords.y + 70;
+
+                return (
+                  <g key={`link-${dep.id}`}>
+                    {/* Glowing connector stroke */}
+                    <path 
+                      d={`M ${startX} ${startY} C ${startX} ${(startY + endY) / 2}, ${endX} ${(startY + endY) / 2}, ${endX} ${endY}`} 
+                      fill="none" 
+                      stroke="url(#glow-grad)" 
+                      strokeWidth="2" 
+                      strokeDasharray="5 5" 
+                      className="animate-pulse"
+                    />
+                    {/* Interactive dot at the end */}
+                    <circle cx={endX} cy={endY} r="4" fill="#D99E41" />
+                  </g>
+                );
+              })}
+            </svg>
+
+            {/* Absolute Drag-and-Drop Department Cards */}
+            {departments.map((dep, idx) => {
+              const coords = getCoordinates(dep, idx);
+              const parentName = dep.parentId ? departments.find(d => d.id === dep.parentId)?.name : null;
+              const isDraggingThis = draggedDeptId === dep.id;
 
               return (
-                <g key={`link-${dep.id}`}>
-                  {/* Glowing connector stroke */}
-                  <path 
-                    d={`M ${startX} ${startY} C ${startX} ${(startY + endY) / 2}, ${endX} ${(startY + endY) / 2}, ${endX} ${endY}`} 
-                    fill="none" 
-                    stroke="url(#glow-grad)" 
-                    strokeWidth="2" 
-                    strokeDasharray="5 5" 
-                    className="animate-pulse"
-                  />
-                  {/* Interactive dot at the end */}
-                  <circle cx={endX} cy={endY} r="4" fill="#D99E41" />
-                </g>
-              );
-            })}
-          </svg>
+                <div
+                  key={dep.id}
+                  style={{
+                    left: `${coords.x}px`,
+                    top: `${coords.y}px`,
+                    width: '260px'
+                  }}
+                  className={`absolute z-10 p-4 rounded-2xl border bg-[#17344F]/90 shadow-xl flex flex-col justify-between select-none transition-shadow ${
+                    isDraggingThis 
+                      ? 'border-amber-300 ring-2 ring-amber-300/30 shadow-2xl scale-102 opacity-95' 
+                      : 'border-white/10 hover:border-amber-200/50 hover:bg-[#1E4468]/95'
+                  }`}
+                >
+                {/* Drag Handle Row */}
+                <div 
+                  onMouseDown={(e) => handleNodeDragStart(e, dep.id)}
+                  onTouchStart={(e) => handleNodeTouchStart(e, dep.id)}
+                  onTouchMove={handleCanvasTouchMove}
+                  onTouchEnd={handleCanvasTouchEnd}
+                  style={{ touchAction: 'none' }}
+                  className="flex items-center gap-2 pb-1.5 border-b border-white/5 mb-2 cursor-grab active:cursor-grabbing hover:bg-white/5 p-1 rounded-lg transition-colors shrink-0 select-none"
+                  title="Зажмите и тащите для перемещения"
+                >
+                  <GripVertical size={14} className="text-amber-400 shrink-0" />
+                  <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-200/80 font-mono">Перетащить блок</span>
+                </div>
 
-          {/* Absolute Drag-and-Drop Department Cards */}
-          {departments.map((dep, idx) => {
-            const coords = getCoordinates(dep, idx);
-            const parentName = dep.parentId ? departments.find(d => d.id === dep.parentId)?.name : null;
-            const isDraggingThis = draggedDeptId === dep.id;
-
-            return (
-              <div
-                key={dep.id}
-                onMouseDown={(e) => handleNodeDragStart(e, dep.id)}
-                style={{
-                  left: `${coords.x}px`,
-                  top: `${coords.y}px`,
-                  width: '260px'
-                }}
-                className={`absolute z-10 p-4 rounded-2xl border bg-[#17344F]/90 backdrop-blur-sm shadow-xl flex flex-col justify-between select-none transition-shadow ${
-                  isDraggingThis 
-                    ? 'border-amber-300 ring-2 ring-amber-300/30 shadow-2xl scale-102 opacity-95' 
-                    : 'border-white/10 hover:border-amber-200/50 hover:bg-[#1E4468]/95'
-                }`}
-              >
                 {/* Header */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-start gap-1">
@@ -555,6 +623,7 @@ export default function CabinetDepartments({
           })}
         </div>
       </div>
+    </div>
 
       {/* SECTION 3: DEPARTMENT PARAMETERS DETAILS MODAL (INFO + EDIT + STAFF MEMBERS) */}
       {selectedDept && (

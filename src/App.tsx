@@ -6,6 +6,7 @@ import WikiPage from './pages/WikiPage';
 import OfertaPage from './pages/OfertaPage';
 import CabinetPage from './pages/CabinetPage';
 import AIAssistant from './components/AIAssistant';
+import InteractiveNetworkBackground from './components/InteractiveNetworkBackground';
 import { UserRole, UserProfile } from './types';
 import { Sparkles, Mail, Lock, UserCheck } from 'lucide-react';
 
@@ -20,9 +21,9 @@ export default function App() {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return null; }
     }
-    // Default mock user profile with an 8-digit ID
+    // Default mock user profile with a 1000000000+n pattern ID
     return {
-      id: '48275916',
+      id: '1048275916',
       name: 'Алексей Иванов',
       email: 'alex.director@example.com',
       role: UserRole.DIRECTOR,
@@ -71,8 +72,8 @@ export default function App() {
   const handleGoogleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Generate a random 8-digit numeric ID string as requested: "создавай порядковый номер пользователя в системе как ID в виде 8значного числа."
-    const generatedId = Math.floor(10000000 + Math.random() * 90000000).toString();
+    // Generate a user ID following the 1000000000+n pattern (e.g., sequence n is randomly picked above 100000)
+    const generatedId = (1000000000 + Math.floor(100000 + Math.random() * 900000)).toString();
     const cleanEmail = loginEmail.trim() || 'user@example.com';
     const cleanName = loginName.trim() || 'Новый Пользователь';
     
@@ -107,7 +108,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#17344F] via-[#1E4468] to-[#265582] text-white selection:bg-amber-200 selection:text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#17344F] via-[#1E4468] to-[#265582] text-white selection:bg-amber-200 selection:text-slate-900 overflow-x-hidden relative">
+      <InteractiveNetworkBackground />
       
       {/* GLOBAL HEADER */}
       <Header 

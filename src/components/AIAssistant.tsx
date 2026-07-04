@@ -70,10 +70,57 @@ export default function AIAssistant() {
   const [activeTab, setActiveTab] = useState<'chat' | 'wiki'>('chat');
   const [wikiSearchQuery, setWikiSearchQuery] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const assistantRef = useRef<HTMLDivElement>(null);
+
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  // Monitor location changes
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handleLocationChange);
+    const interval = setInterval(() => {
+      if (window.location.pathname !== currentPath) {
+        setCurrentPath(window.location.pathname);
+      }
+    }, 500);
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      clearInterval(interval);
+    };
+  }, [currentPath]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  // Click outside to close assistant
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (isOpen && assistantRef.current && !assistantRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // Handle global event to open AI assistant
+  useEffect(() => {
+    const handleOpenEvent = () => {
+      setIsOpen(true);
+    };
+    window.addEventListener('open-ai-assistant', handleOpenEvent);
+    return () => {
+      window.removeEventListener('open-ai-assistant', handleOpenEvent);
+    };
+  }, []);
 
   const quickQuestions = [
     "Что такое ИИ Рапорт?",
@@ -161,33 +208,40 @@ ${wikiContext}
     item.answer.toLowerCase().includes(wikiSearchQuery.toLowerCase())
   );
 
-  return (
-    <div className="fixed bottom-6 left-6 z-40" id="ai-assistant-root">
-      {/* Floating Toggle Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-14 h-14 rounded-full border-2 border-[#E7C768] bg-gradient-to-r from-[#17344F] to-[#265582] text-white shadow-[0_8px_25px_rgba(23,52,79,0.5)] hover:scale-115 active:scale-95 transition-all cursor-pointer group relative"
-        id="ai-assistant-toggle-btn"
-        title="AI Ассистент"
-      >
-        {/* Pulse active status dot in the corner of the round button */}
-        <span className="absolute bottom-0 right-0 flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-slate-950"></span>
-        </span>
+  const isCabinetPath = currentPath.startsWith('/cabinet');
 
-        <img 
-          src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR-Logo.png" 
-          alt="RR AI" 
-          className="w-8 h-8 object-contain group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300"
-          referrerPolicy="no-referrer"
-        />
-      </button>
+  // Hide floating button on mobile in cabinet, or when the assistant is already open
+  const shouldHideButton = isOpen || (isCabinetPath);
+
+  return (
+    <div className="fixed bottom-6 left-6 z-40" id="ai-assistant-root" ref={assistantRef}>
+      {/* Floating Toggle Button */}
+      {!shouldHideButton && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-14 h-14 rounded-full border-2 border-[#E7C768] bg-gradient-to-r from-[#17344F] to-[#265582] text-white shadow-[0_8px_25px_rgba(23,52,79,0.5)] hover:scale-115 active:scale-95 transition-all cursor-pointer group relative animate-fade-in"
+          id="ai-assistant-toggle-btn"
+          title="AI Ассистент"
+        >
+          {/* Pulse active status dot in the corner of the round button */}
+          <span className="absolute bottom-0 right-0 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-slate-950"></span>
+          </span>
+
+          <img 
+            src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR-Logo.png" 
+            alt="RR AI" 
+            className="w-8 h-8 object-contain group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300"
+            referrerPolicy="no-referrer"
+          />
+        </button>
+      )}
 
       {/* Dialog Window */}
       {isOpen && (
         <div 
-          className="absolute bottom-16 left-0 w-85 sm:w-96 h-[520px] rounded-3xl border border-amber-200/30 bg-gradient-to-b from-[#17344F] to-[#265582] shadow-2xl flex flex-col overflow-hidden animate-fade-in text-white"
+          className={`fixed sm:absolute ${isCabinetPath ? 'bottom-24' : 'bottom-6'} left-4 right-4 sm:left-0 sm:right-auto w-[calc(100vw-2rem)] sm:w-96 max-w-sm h-[520px] rounded-3xl border border-amber-200/30 bg-gradient-to-b from-[#17344F] to-[#265582] shadow-2xl flex flex-col overflow-hidden animate-fade-in text-white`}
           id="ai-assistant-window"
         >
           {/* Header */}
