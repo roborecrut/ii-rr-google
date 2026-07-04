@@ -105,6 +105,62 @@ export default function CabinetEmployees({
   const [editDuties, setEditDuties] = useState<string[]>([]);
   const [newDutyInput, setNewDutyInput] = useState('');
 
+  // Manual rewards state
+  const [rewardCoins, setRewardCoins] = useState<number>(100);
+  const [rewardReason, setRewardReason] = useState('');
+  const [rewardBadge, setRewardBadge] = useState('🏆 Гордость компании');
+
+  const handleGiveReward = () => {
+    if (!selectedEmp) return;
+    if (!rewardReason.trim()) {
+      alert('Пожалуйста, введите повод или комментарий для награды!');
+      return;
+    }
+    
+    // Create new manual reward
+    const newReward = {
+      id: 'reward-' + Date.now(),
+      date: new Date().toLocaleDateString('ru-RU'),
+      coins: Number(rewardCoins) || 100,
+      reason: rewardReason.trim(),
+      badgeName: rewardBadge,
+      senderName: currentUser?.name || 'Руководитель'
+    };
+
+    // Update this employee's profile
+    const next = mockEmployees.map(e => {
+      if (e.id === selectedEmp.id) {
+        const currentRewards = (e as any).manualRewards || [];
+        return {
+          ...e,
+          xp: ((e as any).xp || 500) + 150, // Give them 150 bonus XP too!
+          coins: ((e as any).coins || 100) + newReward.coins,
+          manualRewards: [...currentRewards, newReward]
+        };
+      }
+      return e;
+    });
+
+    setMockEmployees(next);
+    saveStateToServer({ 
+      company, 
+      departments, 
+      templates, 
+      reports, 
+      transactions, 
+      notifications, 
+      tariff, 
+      crmCompanies,
+      mockEmployees: next 
+    });
+
+    alert(`🎉 Сотрудник ${selectedEmp.name} успешно награжден знаком "${newReward.badgeName}" и получил +${newReward.coins} коинов!\nКомментарий: "${newReward.reason}"`);
+    
+    // Reset form
+    setRewardReason('');
+    setRewardCoins(100);
+  };
+
   // Open editor
   const handleOpenEdit = (emp: UserProfile) => {
     if (currentUser?.role !== UserRole.DIRECTOR && currentUser?.role !== UserRole.ADMIN && currentUser?.role !== UserRole.MANAGER) {
@@ -561,6 +617,91 @@ export default function CabinetEmployees({
                     ))
                   )}
                 </div>
+              </div>
+
+              {/* SECTION: MANUAL REWARDS BY MANAGEMENT */}
+              <div className="border-t border-white/5 pt-4 space-y-3" id="manual-rewards-section">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-[11px] font-bold uppercase text-amber-200 tracking-wider flex items-center gap-1.5">
+                    <span>🎉 Вручить персональную награду</span>
+                  </h5>
+                  <span className="text-[10px] bg-amber-400/10 text-amber-200 px-2 py-0.5 rounded-full font-bold">Бонусы</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[#17344F]/50 border border-amber-400/20 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Тип награды / Орден</label>
+                      <select
+                        value={rewardBadge}
+                        onChange={(e) => setRewardBadge(e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#11293F] border border-white/10 text-white text-[11px] focus:outline-none"
+                      >
+                        <option value="🏆 Гордость компании">🏆 Гордость компании</option>
+                        <option value="🚀 Космический рывок">🚀 Космический рывок</option>
+                        <option value="🤝 Лучший наставник">🤝 Лучший наставник</option>
+                        <option value="💡 Инновация месяца">💡 Инновация месяца</option>
+                        <option value="🔥 Спаситель дедлайна">🔥 Спаситель дедлайна</option>
+                        <option value="🌟 Сверхпродуктивность">🌟 Сверхпродуктивность</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Бонусные коины</label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={rewardCoins}
+                          min={10}
+                          max={5000}
+                          onChange={(e) => setRewardCoins(Number(e.target.value))}
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-[#11293F] border border-white/10 text-white text-[11px] font-mono focus:outline-none"
+                        />
+                        <span className="text-[10px] text-[#F4EE8E] font-bold">🪙</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Текст благодарности (причина награды)</label>
+                    <input
+                      type="text"
+                      value={rewardReason}
+                      onChange={(e) => setRewardReason(e.target.value)}
+                      placeholder="Например: За досрочное закрытие тяжелой сделки с клиентом"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-[#11293F] border border-white/10 text-white text-[11px] focus:outline-none placeholder-slate-500"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGiveReward}
+                    className="w-full py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-[#D99E41] hover:brightness-110 active:scale-[0.98] text-slate-950 font-extrabold text-[10px] transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <span>🎉 Наградить сотрудника!</span>
+                  </button>
+                </div>
+
+                {/* Received Rewards History */}
+                {((selectedEmp as any).manualRewards && (selectedEmp as any).manualRewards.length > 0) && (
+                  <div className="space-y-1.5">
+                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Ранее врученные ордена:</span>
+                    <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
+                      {(selectedEmp as any).manualRewards.map((rw: any) => (
+                        <div key={rw.id} className="p-2 rounded-lg bg-[#11293F]/50 border border-white/5 flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-[10px] text-[#F4EE8E]">{rw.badgeName}</span>
+                              <span className="text-[8px] bg-amber-400/10 text-amber-300 px-1.5 py-0.5 rounded font-mono font-bold">+{rw.coins} 🪙</span>
+                            </div>
+                            <p className="text-[9px] text-slate-400 leading-normal mt-0.5">"{rw.reason}"</p>
+                            <span className="text-[8px] text-[#A6C4E0] block mt-0.5 font-sans">Вручил: {rw.senderName} • {rw.date}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

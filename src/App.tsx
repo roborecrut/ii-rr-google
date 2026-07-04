@@ -152,8 +152,10 @@ export default function App() {
         <Footer onNavigate={handleNavigate} />
       )}
 
-      {/* GLOBAL FLOATING AI ASSISTANT WIKI BOT (Visible on all pages, left bottom corner) */}
-      <AIAssistant />
+      {/* GLOBAL FLOATING AI ASSISTANT WIKI BOT (Visible on all pages, left bottom corner, except for Employees) */}
+      {currentUser?.role !== UserRole.EMPLOYEE && (
+        <AIAssistant />
+      )}
 
       {/* AUTH REGISTRATION GOOGLE MOCK MODAL */}
       {isLoginModalOpen && (

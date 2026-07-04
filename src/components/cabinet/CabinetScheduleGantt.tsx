@@ -21,7 +21,7 @@ interface EmployeeSchedule {
   shiftConfig: ShiftConfig;
   shifts: {
     day: number;
-    type: 'day' | 'night' | 'daily' | 'weekend' | 'vacation';
+    type: 'day' | 'night' | 'daily' | 'weekend' | 'vacation' | 'sick' | 'dayoff' | 'trip' | 'study' | 'remote';
     hours: string; // resolved time range
   }[];
 }
@@ -53,7 +53,7 @@ export default function CabinetScheduleGantt({
   // Helper to pre-populate shifts dynamically based on selected month (Requirement 7)
   const getInitialShiftsForMonth = (empId: string, monthDays: number[]) => {
     return monthDays.map(day => {
-      let type: 'day' | 'night' | 'daily' | 'weekend' | 'vacation' = 'weekend';
+      let type: 'day' | 'night' | 'daily' | 'weekend' | 'vacation' | 'sick' | 'dayoff' | 'trip' | 'study' | 'remote' = 'weekend';
       let hours = 'Выходной';
       
       if (empId === 'emp-1') {
@@ -258,7 +258,7 @@ export default function CabinetScheduleGantt({
   };
 
   // Modify single day cell
-  const handleUpdateCell = (empId: string, day: number, type: 'day' | 'night' | 'daily' | 'weekend' | 'vacation') => {
+  const handleUpdateCell = (empId: string, day: number, type: 'day' | 'night' | 'daily' | 'weekend' | 'vacation' | 'sick' | 'dayoff' | 'trip' | 'study' | 'remote') => {
     setSchedules(prev => prev.map(s => {
       if (s.id !== empId) return s;
       
@@ -267,6 +267,11 @@ export default function CabinetScheduleGantt({
       else if (type === 'night') resolvedHours = s.shiftConfig.nightHours;
       else if (type === 'daily') resolvedHours = s.shiftConfig.dailyHours;
       else if (type === 'vacation') resolvedHours = 'Отпуск';
+      else if (type === 'sick') resolvedHours = 'Больничный';
+      else if (type === 'dayoff') resolvedHours = 'Отгул';
+      else if (type === 'trip') resolvedHours = 'Командировка';
+      else if (type === 'study') resolvedHours = 'Обучение';
+      else if (type === 'remote') resolvedHours = 'Удаленная работа';
 
       const nextShifts = s.shifts.map(sh => sh.day === day ? { ...sh, type, hours: resolvedHours } : sh);
       return { ...s, shifts: nextShifts };
@@ -405,7 +410,12 @@ export default function CabinetScheduleGantt({
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-amber-400"></span> Ночная (🌙)</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-violet-500"></span> Суточная 24ч (⏳)</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-[#17344F] border border-white/10"></span> Выходной</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-indigo-500"></span> Отпуск</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-indigo-500"></span> Отпуск (🌴)</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-500"></span> Больничный (🤒)</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-teal-500"></span> Отгул (☕)</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-orange-500"></span> Командировка (💼)</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-pink-500"></span> Обучение (🎓)</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-cyan-500"></span> Удаленка (💻)</span>
         </div>
       </div>
 
@@ -455,6 +465,26 @@ export default function CabinetScheduleGantt({
               statusBadge = 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300';
               statusText = 'В отпуске 🌴';
               iconText = '🌴';
+            } else if (todayShift.type === 'sick') {
+              statusBadge = 'bg-red-500/15 border-red-500/30 text-red-300';
+              statusText = 'Больничный 🤒';
+              iconText = '🤒';
+            } else if (todayShift.type === 'dayoff') {
+              statusBadge = 'bg-teal-500/15 border-teal-500/30 text-teal-300';
+              statusText = 'Отгул ☕';
+              iconText = '☕';
+            } else if (todayShift.type === 'trip') {
+              statusBadge = 'bg-orange-500/15 border-orange-500/30 text-orange-300';
+              statusText = 'Командировка 💼';
+              iconText = '💼';
+            } else if (todayShift.type === 'study') {
+              statusBadge = 'bg-pink-500/15 border-pink-500/30 text-pink-300';
+              statusText = 'Обучение 🎓';
+              iconText = '🎓';
+            } else if (todayShift.type === 'remote') {
+              statusBadge = 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300';
+              statusText = 'Удаленка 💻';
+              iconText = '💻';
             } else {
               statusBadge = 'bg-[#17344F]/60 border-white/5 text-slate-400';
               statusText = 'Выходной';
@@ -588,6 +618,21 @@ export default function CabinetScheduleGantt({
                     } else if (shift.type === 'vacation') {
                       barColor = 'bg-indigo-500 text-white border-indigo-400/10';
                       label = 'Отп';
+                    } else if (shift.type === 'sick') {
+                      barColor = 'bg-red-500 text-white border-red-400/10';
+                      label = 'Блн';
+                    } else if (shift.type === 'dayoff') {
+                      barColor = 'bg-teal-500 text-white border-teal-400/10';
+                      label = 'Отг';
+                    } else if (shift.type === 'trip') {
+                      barColor = 'bg-orange-500 text-white border-orange-400/10';
+                      label = 'Ком';
+                    } else if (shift.type === 'study') {
+                      barColor = 'bg-pink-500 text-white border-pink-400/10';
+                      label = 'Учб';
+                    } else if (shift.type === 'remote') {
+                      barColor = 'bg-cyan-500 text-slate-950 border-cyan-400/10';
+                      label = 'Удл';
                     }
 
                     // Requirement 7: Absences are highlighted in red, lateness with an alarm, worked with a check
@@ -665,6 +710,41 @@ export default function CabinetScheduleGantt({
                             >
                               <span>🌴 Отпуск</span>
                               <span>Отп</span>
+                            </button>
+                            <button 
+                              onClick={() => handleUpdateCell(emp.id, day, 'sick')}
+                              className="w-full text-left py-1 px-1.5 rounded hover:bg-[#1E4468] text-red-300 flex justify-between"
+                            >
+                              <span>🤒 Больничный</span>
+                              <span>Блн</span>
+                            </button>
+                            <button 
+                              onClick={() => handleUpdateCell(emp.id, day, 'dayoff')}
+                              className="w-full text-left py-1 px-1.5 rounded hover:bg-[#1E4468] text-teal-300 flex justify-between"
+                            >
+                              <span>☕ Отгул</span>
+                              <span>Отг</span>
+                            </button>
+                            <button 
+                              onClick={() => handleUpdateCell(emp.id, day, 'trip')}
+                              className="w-full text-left py-1 px-1.5 rounded hover:bg-[#1E4468] text-orange-300 flex justify-between"
+                            >
+                              <span>💼 Командировка</span>
+                              <span>Ком</span>
+                            </button>
+                            <button 
+                              onClick={() => handleUpdateCell(emp.id, day, 'study')}
+                              className="w-full text-left py-1 px-1.5 rounded hover:bg-[#1E4468] text-pink-300 flex justify-between"
+                            >
+                              <span>🎓 Обучение</span>
+                              <span>Учб</span>
+                            </button>
+                            <button 
+                              onClick={() => handleUpdateCell(emp.id, day, 'remote')}
+                              className="w-full text-left py-1 px-1.5 rounded hover:bg-[#1E4468] text-[#22D3EE] flex justify-between"
+                            >
+                              <span>💻 Удаленка</span>
+                              <span>Удл</span>
                             </button>
                           </div>
                         )}

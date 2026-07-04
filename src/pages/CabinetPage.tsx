@@ -3,7 +3,8 @@ import { motion } from 'motion/react';
 import { 
   User, Building, Layers, Users, FileText, Calendar as CalendarIcon, 
   Clock, BarChart3, Settings, CreditCard, Shield, Send, Mic, Sparkles, 
-  Plus, Trash2, Check, HelpCircle, Edit3, Save, ArrowUpRight, MessageSquare, AlertCircle, Share2, Bell, X, Landmark, Menu, Bot, LogOut
+  Plus, Trash2, Check, HelpCircle, Edit3, Save, ArrowUpRight, MessageSquare, AlertCircle, Share2, Bell, X, Landmark, Menu, Bot, LogOut,
+  Trophy, Flame, Coins, Award, Zap
 } from 'lucide-react';
 import { 
   UserRole, UserProfile, CompanyInfo, Department, ReportTemplate, 
@@ -25,6 +26,7 @@ import CabinetNotifications from '../components/cabinet/CabinetNotifications';
 import CabinetTariff from '../components/cabinet/CabinetTariff';
 import CabinetSettings from '../components/cabinet/CabinetSettings';
 import CabinetCRM from '../components/cabinet/CabinetCRM';
+import CabinetLeaderboard from '../components/cabinet/CabinetLeaderboard';
 
 interface CabinetPageProps {
   currentPath: string;
@@ -549,7 +551,7 @@ export default function CabinetPage({
   const unreadNotificationsCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <div className="w-full text-white bg-transparent font-sans p-4 sm:p-6 min-h-screen relative" id="cabinet-root">
+    <div className="w-full text-white bg-transparent font-sans p-4 sm:p-6 pt-16 lg:pt-6 min-h-screen relative" id="cabinet-root">
       
       {/* DEDICATED CABINET HEADER FOR DESKTOP */}
       <div className="hidden lg:flex items-center justify-between p-4 bg-gradient-to-r from-[#17344F]/95 to-[#265582]/95 backdrop-blur-md border border-white/10 rounded-2xl mb-6 mx-auto max-w-7xl shadow-xl" id="desktop-cabinet-header">
@@ -589,6 +591,26 @@ export default function CabinetPage({
             id="cabinet-back-home-btn"
           >
             ← Вернуться на главную
+          </button>
+
+          <div className="h-6 w-px bg-white/10" />
+
+          {/* Notifications Bell Hub */}
+          <button
+            onClick={() => {
+              handleTabClick('notifications');
+              handleMarkAllNotificationsRead();
+            }}
+            className="relative p-2 rounded-xl border border-white/10 text-slate-300 hover:text-[#F4EE8E] hover:bg-[#1E4468]/50 transition-all cursor-pointer flex items-center justify-center"
+            title="Уведомления"
+            id="cabinet-header-bell-desktop"
+          >
+            <Bell size={15} />
+            {unreadNotificationsCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-extrabold font-mono text-[8px] min-w-[15px] h-[15px] px-1 rounded-full flex items-center justify-center animate-pulse">
+                {unreadNotificationsCount}
+              </span>
+            )}
           </button>
 
           <div className="h-6 w-px bg-white/10" />
@@ -653,7 +675,7 @@ export default function CabinetPage({
       </div>
 
       {/* MOBILE HEADER (FIXED/STICKY AT THE TOP WITH FLUSH EDGES) */}
-      <div className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-2.5 bg-[#17344F]/95 backdrop-blur-md border-b border-white/10 -mx-4 -mt-4 mb-5 shadow-lg" id="mobile-cabinet-header">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-[#17344F]/95 backdrop-blur-md border-b border-white/10 shadow-lg" id="mobile-cabinet-header">
         <button 
           onClick={() => setIsMobileMenuOpen(true)}
           className="p-2 -ml-2 text-slate-300 hover:text-white transition-colors cursor-pointer"
@@ -667,18 +689,42 @@ export default function CabinetPage({
            activeTab === 'departments' ? 'Отделы' :
            activeTab === 'employees' ? 'Сотрудники' :
            activeTab === 'reports_builder' ? 'Конструктор' :
-           activeTab === 'fill_report' ? 'Заполнение' :
+           activeTab === 'fill_report' ? 'Отчет' :
            activeTab === 'calendar' ? 'Календарь' :
            activeTab === 'schedules_builder' ? 'Графики' :
            activeTab === 'employee_schedule' ? 'Мой график' :
            activeTab === 'analytics' ? 'Аналитика' :
+           activeTab === 'leaderboard' ? 'Рейтинг' :
            activeTab === 'notifications' ? 'Оповещения' :
            activeTab === 'tariff' ? 'Тариф' :
            activeTab === 'settings' ? 'Промпты' :
            activeTab === 'crm' ? 'CRM' : 'ИИ Рапорт'}
         </span>
-        <div className="w-8 h-8 rounded-full bg-[#1E4468] border border-[#E7C768] flex items-center justify-center font-bold text-xs text-[#F4EE8E]">
-          {currentUser?.name.charAt(0) || 'U'}
+        <div className="flex items-center gap-2">
+          {/* Notifications Bell Hub for Mobile */}
+          <button
+            onClick={() => {
+              handleTabClick('notifications');
+              handleMarkAllNotificationsRead();
+            }}
+            className="relative p-2 text-slate-300 hover:text-[#F4EE8E] transition-colors cursor-pointer flex items-center justify-center"
+            title="Уведомления"
+            id="cabinet-header-bell-mobile"
+          >
+            <Bell size={18} />
+            {unreadNotificationsCount > 0 && (
+              <span className="absolute top-1 right-1 bg-red-500 text-white font-extrabold font-mono text-[8px] min-w-[14px] h-[14px] rounded-full flex items-center justify-center animate-pulse">
+                {unreadNotificationsCount}
+              </span>
+            )}
+          </button>
+
+          <div 
+            onClick={() => handleTabClick('profile')}
+            className="w-8 h-8 rounded-full bg-[#1E4468] border border-[#E7C768] flex items-center justify-center font-bold text-xs text-[#F4EE8E] cursor-pointer"
+          >
+            {currentUser?.name.charAt(0) || 'U'}
+          </div>
         </div>
       </div>
 
@@ -790,6 +836,17 @@ export default function CabinetPage({
                 >
                   <CalendarIcon size={15} />
                   Календарь отчетов
+                </button>
+
+                {/* Leaderboard (All) */}
+                <button
+                  onClick={() => { handleTabClick('leaderboard'); setIsMobileMenuOpen(false); }}
+                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                    activeTab === 'leaderboard' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                  }`}
+                >
+                  <Trophy size={15} className="text-[#E7C768]" />
+                  Рейтинг & Мотивация
                 </button>
 
                 {/* Work Schedules (Managers / Directors / Admins) */}
@@ -1000,6 +1057,17 @@ export default function CabinetPage({
             >
               <CalendarIcon size={15} />
               Календарь отчетов
+            </button>
+
+            {/* Leaderboard (All) */}
+            <button
+              onClick={() => handleTabClick('leaderboard')}
+              className={`w-full px-4 py-3 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                activeTab === 'leaderboard' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+              }`}
+            >
+              <Trophy size={15} className="text-[#E7C768]" />
+              <span>Рейтинг & Мотивация</span>
             </button>
 
             {/* Work Schedules (Managers / Directors / Admins) */}
@@ -1274,6 +1342,16 @@ export default function CabinetPage({
             />
           )}
 
+          {/* Tab 10.5: LEADERBOARD GAMIFICATION */}
+          {activeTab === 'leaderboard' && (
+            <CabinetLeaderboard 
+              currentUser={currentUser}
+              mockEmployees={mockEmployees}
+              reports={reports}
+              onNavigateTab={handleTabClick}
+            />
+          )}
+
           {/* Tab 11: TARIFF */}
           {activeTab === 'tariff' && (
             <CabinetTariff 
@@ -1534,105 +1612,109 @@ export default function CabinetPage({
       )}
 
       {/* MOBILE BOTTOM NAVBAR */}
-      <div className="fixed bottom-3 left-2.5 right-2.5 z-40 lg:hidden flex gap-2 items-center animate-slide-in-bottom" id="mobile-bottom-navbar-container">
-        {/* Left Part: Long panel with 4 icons */}
-        <nav className="flex-1 bg-[#17344F]/95 backdrop-blur-md border border-white/10 rounded-2xl flex justify-around py-1.5 px-0.5 shadow-2xl h-14 items-center" id="mobile-bottom-navbar">
-          {currentUser?.role === UserRole.EMPLOYEE ? (
-            <>
-              <button
-                onClick={() => handleTabClick('fill_report')}
-                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'fill_report' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <FileText size={15} />
-                <span className="text-[8px] font-bold truncate max-w-full">Ввод</span>
-              </button>
-              <button
-                onClick={() => handleTabClick('employee_schedule')}
-                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'employee_schedule' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Clock size={15} />
-                <span className="text-[8px] font-bold truncate max-w-full">График</span>
-              </button>
-              <button
-                onClick={() => handleTabClick('calendar')}
-                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <CalendarIcon size={15} />
-                <span className="text-[8px] font-bold truncate max-w-full">Рапорты</span>
-              </button>
-              <button
-                onClick={() => handleTabClick('profile')}
-                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <User size={15} />
-                <span className="text-[8px] font-bold truncate max-w-full">Профиль</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => handleTabClick('calendar')}
-                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <CalendarIcon size={15} />
-                <span className="text-[8px] font-bold truncate max-w-full">Рапорты</span>
-              </button>
-              <button
-                onClick={() => handleTabClick('employees')}
-                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'employees' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Users size={15} />
-                <span className="text-[8px] font-bold truncate max-w-full">Команда</span>
-              </button>
-              <button
-                onClick={() => handleTabClick('analytics')}
-                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'analytics' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <BarChart3 size={15} />
-                <span className="text-[8px] font-bold truncate max-w-full">Анализ</span>
-              </button>
-              <button
-                onClick={() => handleTabClick('profile')}
-                className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <User size={15} />
-                <span className="text-[8px] font-bold truncate max-w-full">Профиль</span>
-              </button>
-            </>
-          )}
-        </nav>
+      {currentUser?.role === UserRole.EMPLOYEE ? (
+        <div className="fixed bottom-3 left-3 right-3 z-40 lg:hidden animate-slide-in-bottom" id="mobile-bottom-navbar-container">
+          <nav className="w-full bg-[#17344F]/95 backdrop-blur-md border border-white/10 rounded-2xl flex justify-around py-1.5 px-1 shadow-2xl h-14 items-center" id="mobile-bottom-navbar">
+            <button
+              onClick={() => handleTabClick('fill_report')}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'fill_report' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <FileText size={16} />
+              <span className="text-[9px] font-extrabold truncate max-w-full">Отчет</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('employee_schedule')}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'employee_schedule' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Clock size={16} />
+              <span className="text-[9px] font-extrabold truncate max-w-full">График</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('calendar')}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <CalendarIcon size={16} />
+              <span className="text-[9px] font-extrabold truncate max-w-full">Рапорты</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('profile')}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <User size={16} />
+              <span className="text-[9px] font-extrabold truncate max-w-full">Профиль</span>
+            </button>
+          </nav>
+        </div>
+      ) : (
+        <div className="fixed bottom-3 left-2.5 right-2.5 z-40 lg:hidden flex gap-2 items-center animate-slide-in-bottom" id="mobile-bottom-navbar-container">
+          {/* Left Part: Long panel with 4 icons */}
+          <nav className="flex-1 bg-[#17344F]/95 backdrop-blur-md border border-white/10 rounded-2xl flex justify-around py-1.5 px-0.5 shadow-2xl h-14 items-center" id="mobile-bottom-navbar">
+            <button
+              onClick={() => handleTabClick('calendar')}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'calendar' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <CalendarIcon size={15} />
+              <span className="text-[8px] font-bold truncate max-w-full">Рапорты</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('employees')}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'employees' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Users size={15} />
+              <span className="text-[8px] font-bold truncate max-w-full">Команда</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('analytics')}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'analytics' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <BarChart3 size={15} />
+              <span className="text-[8px] font-bold truncate max-w-full">Анализ</span>
+            </button>
+            <button
+              onClick={() => handleTabClick('profile')}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'profile' ? 'text-[#F4EE8E] bg-[#1E4468]/50' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <User size={15} />
+              <span className="text-[8px] font-bold truncate max-w-full">Профиль</span>
+            </button>
+          </nav>
 
-        {/* Right Part: Round circular AI assistant button with gold glowing border */}
-        <button
-          onClick={() => {
-            window.dispatchEvent(new CustomEvent('open-ai-assistant'));
-          }}
-          className="w-12 h-12 rounded-full border border-[#E7C768] bg-gradient-to-br from-[#1E4468] to-[#17344F] flex flex-col items-center justify-center shadow-[0_0_12px_rgba(231,199,104,0.4)] hover:brightness-110 active:scale-95 transition-all cursor-pointer text-amber-200 shrink-0 select-none relative group"
-          id="mobile-ai-navbar-btn"
-          title="ИИ Ассистент"
-        >
-          {/* Subtle gold glow pulse background */}
-          <span className="absolute inset-0 rounded-full bg-amber-400/10 animate-ping pointer-events-none" />
-          <Bot size={18} className="animate-pulse text-[#F4EE8E]" />
-          <span className="text-[7.5px] font-extrabold text-amber-200 leading-none mt-0.5">ИИ Бот</span>
-        </button>
-      </div>
+          {/* Right Part: Round circular AI assistant button with gold glowing border and RR Logo */}
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('open-ai-assistant'));
+            }}
+            className="w-12 h-12 rounded-full border border-[#E7C768] bg-gradient-to-br from-[#1E4468] to-[#17344F] flex items-center justify-center shadow-[0_0_12px_rgba(231,199,104,0.4)] hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0 select-none relative group"
+            id="mobile-ai-navbar-btn"
+            title="ИИ Ассистент"
+          >
+            {/* Subtle gold glow pulse background */}
+            <span className="absolute inset-0 rounded-full bg-amber-400/15 animate-ping pointer-events-none" />
+            <img 
+              src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR-Logo.png" 
+              alt="RR AI" 
+              className="w-7 h-7 object-contain group-hover:scale-110 transition-transform duration-300"
+              referrerPolicy="no-referrer"
+            />
+          </button>
+        </div>
+      )}
 
     </div>
   );

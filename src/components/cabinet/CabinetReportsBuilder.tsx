@@ -43,6 +43,7 @@ export default function CabinetReportsBuilder({
   const [customPrompt, setCustomPrompt] = useState('');
   const [reminderMinutes, setReminderMinutes] = useState(15);
   const [reminderText, setReminderText] = useState('Внимание! Напоминаем о необходимости сдать отчет.');
+  const [templateSearchQuery, setTemplateSearchQuery] = useState('');
 
   const handleAddTplField = () => {
     setTplFields([
@@ -211,7 +212,7 @@ export default function CabinetReportsBuilder({
 
       {/* Top Dropdown for fast fill/generate */}
       {!editingTemplateId && (
-        <div className="p-4 rounded-2xl border border-amber-400/20 bg-[#17344F]/50 space-y-2 relative" id="quick-fill-template-container">
+        <div className="p-4 rounded-2xl border border-amber-400/20 bg-[#17344F]/50 space-y-2.5 relative" id="quick-fill-template-container">
           <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-amber-400/5 to-transparent rounded-2xl" />
           <label className="block text-xs font-bold text-[#F4EE8E] font-sans uppercase tracking-wider relative z-10 flex items-center gap-1.5">
             <Sparkles size={14} className="text-amber-200 animate-pulse" />
@@ -220,6 +221,17 @@ export default function CabinetReportsBuilder({
           <p className="text-[10px] text-slate-400 relative z-10">
             Выберите шаблон, чтобы скопировать его вопросы и настройки в форму ниже для мгновенной сборки нового отчета (без редактирования оригинала).
           </p>
+          
+          <div className="relative z-10">
+            <input
+              type="text"
+              value={templateSearchQuery}
+              onChange={(e) => setTemplateSearchQuery(e.target.value)}
+              placeholder="🔍 Быстрый поиск готового шаблона по названию или отделу..."
+              className="w-full px-4 py-2 rounded-xl bg-[#11293F] border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] font-sans"
+            />
+          </div>
+
           <select
             onChange={(e) => {
               const selectedId = e.target.value;
@@ -243,15 +255,28 @@ export default function CabinetReportsBuilder({
             value=""
             className="w-full px-4 py-2.5 rounded-xl bg-[#17344F] border border-white/10 text-[#F4EE8E] font-bold text-xs focus:outline-none focus:border-[#E7C768] cursor-pointer font-sans relative z-10"
           >
-            <option value="" className="text-slate-400">-- Нажмите для выбора шаблона-основы --</option>
-            {templates.map(tpl => {
-              const deptName = departments.find(d => d.id === tpl.departmentId)?.name || 'Общий отдел';
-              return (
-                <option key={tpl.id} value={tpl.id} className="bg-[#11293F] text-[#F4EE8E]">
-                  {tpl.title} ({deptName} • {tpl.fields.length} вопросов)
-                </option>
-              );
-            })}
+            <option value="" className="text-slate-400">
+              {templateSearchQuery ? `-- Выберите из отфильтрованных (${templates.filter(t => {
+                const query = templateSearchQuery.toLowerCase();
+                const deptName = (departments.find(d => d.id === t.departmentId)?.name || 'Общий отдел').toLowerCase();
+                return t.title.toLowerCase().includes(query) || deptName.includes(query);
+              }).length}) --` : '-- Нажмите для выбора шаблона-основы --'}
+            </option>
+            {templates
+              .filter(tpl => {
+                if (!templateSearchQuery.trim()) return true;
+                const query = templateSearchQuery.toLowerCase();
+                const deptName = (departments.find(d => d.id === tpl.departmentId)?.name || 'Общий отдел').toLowerCase();
+                return tpl.title.toLowerCase().includes(query) || deptName.includes(query);
+              })
+              .map(tpl => {
+                const deptName = departments.find(d => d.id === tpl.departmentId)?.name || 'Общий отдел';
+                return (
+                  <option key={tpl.id} value={tpl.id} className="bg-[#11293F] text-[#F4EE8E]">
+                    {tpl.title} ({deptName} • {tpl.fields.length} вопросов)
+                  </option>
+                );
+              })}
           </select>
         </div>
       )}
