@@ -55,6 +55,14 @@ export default function Footer({ onNavigate }: FooterProps) {
               <Shield size={11} />
               Публичная оферта сервиса
             </button>
+            <button 
+              onClick={() => onNavigate('/blog')}
+              className="text-[#E7C768] hover:underline text-[11px] text-left mt-1 cursor-pointer flex items-center gap-1 font-sans"
+              id="footer-blog-link"
+            >
+              <span>✍️</span>
+              Блог и SEO база знаний
+            </button>
           </div>
 
           {/* Action Links & External integrations */}
@@ -67,14 +75,14 @@ export default function Footer({ onNavigate }: FooterProps) {
                 href="https://rent-rop.com/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 font-bold hover:brightness-110 shadow-lg active:scale-98 transition-all font-sans border border-amber-200/40"
+                className="flex items-center justify-between px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-[11px] font-bold hover:brightness-110 shadow-sm active:scale-98 transition-all font-sans border border-amber-200/40"
                 id="footer-product-btn"
               >
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#1E4468]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1E4468]" />
                   Продукт компании РентРОП
                 </span>
-                <ExternalLink size={12} className="text-slate-900" />
+                <ExternalLink size={10} className="text-slate-900" />
               </a>
 
               {/* Support channel button */}
@@ -82,14 +90,14 @@ export default function Footer({ onNavigate }: FooterProps) {
                 href="https://t.me/+Qr9hu55w7tEwNjZi" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 font-bold hover:brightness-110 shadow-lg active:scale-98 transition-all font-sans border border-amber-200/40"
+                className="flex items-center justify-between px-3.5 py-1.5 rounded-lg bg-[#1E4468] text-slate-100 hover:bg-[#265582] text-[11px] font-semibold active:scale-98 transition-all font-sans border border-white/10"
                 id="footer-support-btn"
               >
-                <span className="flex items-center gap-1.5">
-                  <MessageCircle size={14} className="text-slate-900" />
+                <span className="flex items-center gap-1.5 text-[#F4EE8E]">
+                  <MessageCircle size={12} className="text-[#F4EE8E]" />
                   Чат техподдержки Telegram
                 </span>
-                <ExternalLink size={12} className="text-slate-900" />
+                <ExternalLink size={10} className="text-slate-300" />
               </a>
             </div>
           </div>

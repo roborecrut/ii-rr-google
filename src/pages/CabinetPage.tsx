@@ -27,6 +27,7 @@ import CabinetTariff from '../components/cabinet/CabinetTariff';
 import CabinetSettings from '../components/cabinet/CabinetSettings';
 import CabinetCRM from '../components/cabinet/CabinetCRM';
 import CabinetLeaderboard from '../components/cabinet/CabinetLeaderboard';
+import CabinetBlogPosts from '../components/cabinet/CabinetBlogPosts';
 
 interface CabinetPageProps {
   currentPath: string;
@@ -921,8 +922,8 @@ export default function CabinetPage({
                   </button>
                 )}
 
-                {/* Settings Prompts (Directors only) */}
-                {(currentUser?.role === UserRole.DIRECTOR) && (
+                {/* Settings Prompts (Directors and Admins) */}
+                {(currentUser?.role === UserRole.DIRECTOR || currentUser?.role === UserRole.ADMIN) && (
                   <button
                     onClick={() => { handleTabClick('settings'); setIsMobileMenuOpen(false); }}
                     className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
@@ -944,6 +945,19 @@ export default function CabinetPage({
                   >
                     <Shield size={15} />
                     CRM Админа
+                  </button>
+                )}
+
+                {/* Blog Posts Management (Admins only) */}
+                {(currentUser?.role === UserRole.ADMIN) && (
+                  <button
+                    onClick={() => { handleTabClick('blog_posts'); setIsMobileMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                      activeTab === 'blog_posts' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                    }`}
+                  >
+                    <FileText size={15} />
+                    Посты Блога
                   </button>
                 )}
               </nav>
@@ -1141,8 +1155,8 @@ export default function CabinetPage({
               </button>
             )}
 
-            {/* Settings Prompts (Directors only) */}
-            {(currentUser?.role === UserRole.DIRECTOR) && (
+            {/* Settings Prompts (Directors and Admins) */}
+            {(currentUser?.role === UserRole.DIRECTOR || currentUser?.role === UserRole.ADMIN) && (
               <button
                 onClick={() => handleTabClick('settings')}
                 className={`w-full px-4 py-3 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
@@ -1164,6 +1178,19 @@ export default function CabinetPage({
               >
                 <Shield size={15} />
                 CRM Админа
+              </button>
+            )}
+
+            {/* Blog Posts Management (Admins only) */}
+            {(currentUser?.role === UserRole.ADMIN) && (
+              <button
+                onClick={() => handleTabClick('blog_posts')}
+                className={`w-full px-4 py-3 rounded-xl flex items-center gap-3 font-semibold transition-all cursor-pointer ${
+                  activeTab === 'blog_posts' ? 'bg-[#1E4468] text-[#F4EE8E] border-l-4 border-[#E7C768]' : 'text-slate-300 hover:bg-[#1E4468]/50 hover:text-white'
+                }`}
+              >
+                <FileText size={15} />
+                Посты Блога
               </button>
             )}
           </nav>
@@ -1376,7 +1403,7 @@ export default function CabinetPage({
             />
           )}
 
-          {/* Tab 12: SETTINGS (Directors only) */}
+          {/* Tab 12: SETTINGS (Directors and Admins) */}
           {activeTab === 'settings' && (
             <CabinetSettings 
               promptRecs={promptRecs}
@@ -1410,6 +1437,11 @@ export default function CabinetPage({
               tariff={tariff}
               mockEmployees={mockEmployees}
             />
+          )}
+
+          {/* Tab 14: BLOG POSTS (Admin only) */}
+          {activeTab === 'blog_posts' && (
+            <CabinetBlogPosts />
           )}
 
           </motion.div>

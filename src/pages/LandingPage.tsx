@@ -4,6 +4,8 @@ import { motion } from 'motion/react';
 import TypewriterText from '../components/TypewriterText';
 import VerticalReviewsCarousel from '../components/VerticalReviewsCarousel';
 import InteractiveFlowSimulator from '../components/InteractiveFlowSimulator';
+import CommentsSection from '../components/CommentsSection';
+import { UserProfile } from '../types';
 
 interface Review {
   id: string;
@@ -18,9 +20,10 @@ interface Review {
 interface LandingPageProps {
   onNavigate: (path: string) => void;
   onOpenLoginModal: () => void;
+  currentUser: UserProfile | null;
 }
 
-export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPageProps) {
+export default function LandingPage({ onNavigate, onOpenLoginModal, currentUser }: LandingPageProps) {
   // Calculator state
   const [employeesCount, setEmployeesCount] = useState<number>(10);
   const [tariffType, setTariffType] = useState<'trial' | 'business'>('business');
@@ -93,7 +96,10 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newReviewName.trim() || !newReviewText.trim()) return;
+    const reviewName = currentUser ? currentUser.name : newReviewName;
+    const reviewCompany = currentUser ? (currentUser.position || 'Пользователь ИИ Рапорт') : newReviewCompany;
+
+    if (!reviewName.trim() || !newReviewText.trim()) return;
 
     setIsSubmittingReview(true);
     setAiReviewReply("ИИ Рапорт анализирует ваш отзыв...");
@@ -119,8 +125,8 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
 
       const newReviewItem: Review = {
         id: Date.now().toString(),
-        name: newReviewName,
-        company: newReviewCompany || 'Анонимная компания',
+        name: reviewName,
+        company: reviewCompany || 'Анонимная компания',
         text: newReviewText,
         aiResponse: aiGeneratedReply,
         officialResponse: 'Благодарим за обратную связь! Наша команда поддержки всегда на связи, чтобы сделать ИИ Рапорт еще полезнее для вас.',
@@ -144,7 +150,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
     <div className="w-full text-white bg-gradient-to-b from-[#17344F] via-[#1E4468] to-[#265582] font-sans selection:bg-amber-200 selection:text-slate-900" id="landing-page-root">
       
       {/* 1. HERO SECTION */}
-      <section className="relative overflow-hidden pt-12 pb-24 md:py-32 bg-transparent px-4 sm:px-6" id="hero-section">
+      <section className="relative overflow-hidden pt-4 pb-10 md:py-12 bg-transparent px-4 sm:px-6" id="hero-section">
         {/* Apple Liquid Glass floating blur blobs */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-amber-200/5 blur-[120px] pointer-events-none" />
         <div className="absolute -top-10 -right-10 w-[300px] h-[300px] rounded-full bg-sky-500/10 blur-[80px] pointer-events-none" />
@@ -241,7 +247,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
       </section>
 
       {/* 2. CORE USP & FEATURES SECTION */}
-      <section className="py-20 px-4 sm:px-6 bg-[#17344F]/20" id="features-section">
+      <section className="py-8 px-4 sm:px-6 bg-[#17344F]/20" id="features-section">
         <div className="mx-auto max-w-7xl text-center space-y-12">
           
           <div className="space-y-4 max-w-3xl mx-auto">
@@ -374,7 +380,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
       </section>
 
       {/* NEW: INTERACTIVE STEP-BY-STEP SIMULATOR SECTION */}
-      <section className="py-20 px-4 sm:px-6 bg-gradient-to-b from-[#17344F]/40 to-[#1E4468]/40 border-t border-b border-white/5 relative" id="interactive-simulator-section">
+      <section className="py-8 px-4 sm:px-6 bg-gradient-to-b from-[#17344F]/40 to-[#1E4468]/40 border-t border-b border-white/5 relative" id="interactive-simulator-section">
         {/* Absolute glow element */}
         <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-amber-200/5 blur-[100px] pointer-events-none" />
         
@@ -383,13 +389,13 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
           <div className="text-center space-y-4 max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-200 text-xs font-semibold uppercase tracking-wider font-mono">
               <Sparkles size={13} className="animate-pulse" />
-              <span>Живой Симулятор</span>
+              <span>9 суперспособностей ИИ Рапорта</span>
             </div>
-            <h3 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-[#F4EE8E] bg-clip-text text-transparent">
+            <h3 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-[#F4EE8E] bg-clip-text text-transparent font-sans">
               Как устроен рабочий цикл ИИ Рапорта
             </h3>
             <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-              Нажмите на шаги ниже, чтобы в реальном времени увидеть весь процесс: от ИИ-генерации полей шаблона до голосовой сдачи отчета сотрудником и автоматической аналитики директору.
+              Нажмите на любую из <strong className="text-amber-200">9 ключевых функций</strong> слева, чтобы в реальном времени увидеть весь интерактивный процесс: от мультимедийной сдачи отчетов и умного планирования до персональных ИИ-рекомендаций, геймификации и моментальной отправки в Telegram!
             </p>
           </div>
 
@@ -398,96 +404,8 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
         </div>
       </section>
 
-      {/* 3. TELEGRAM INTEGRATION & NOTIFICATIONS */}
-      <section className="py-20 px-4 sm:px-6 bg-[#265582]/20 border-t border-b border-white/10 relative" id="telegram-section">
-        <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
-          {/* Text and stats */}
-          <motion.div 
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.6 }}
-            className="lg:col-span-7 space-y-6"
-          >
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/20 text-sky-400 text-xs font-semibold">
-              <MessageCircle size={13} />
-              <span>Интеграция с Telegram</span>
-            </div>
-
-            <h3 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-[#F4EE8E] bg-clip-text text-transparent">
-              Уведомления и напоминания в Telegram бот
-            </h3>
-
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Не сдали вовремя отчет? Спустя <strong className="text-[#F4EE8E] font-semibold">15 минут</strong> после начала или завершения смены по личному графику наш бот напомнит сотруднику в личку. Уведомления и саммари отправляются в красивом разметке <code className="text-amber-200 font-mono bg-[#17344F]/50 px-1.5 py-0.5 rounded text-xs">Markdown</code> нового обновления Telegram прямо в групповой чат отдела!
-            </p>
-
-            {/* Megaphone Mascot RR3 */}
-            <div className="flex gap-4 p-4 rounded-2xl bg-gradient-to-r from-[#17344F]/90 to-[#265582]/90 border border-white/15 items-center">
-              <img 
-                src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR3.png" 
-                alt="Робот RR Оповещения" 
-                className="w-16 h-16 object-contain animate-pulse-slow flex-shrink-0"
-                referrerPolicy="no-referrer"
-              />
-              <div className="text-xs">
-                <p className="text-[#F4EE8E] font-bold">Оповещатель RR с рупором:</p>
-                <p className="text-slate-300 italic">"Бип-буп! Я никогда не просплю. Если отчет задерживается — я вежливо, но настойчиво напомню сотруднику в личные сообщения!"</p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Graphic mockup of Telegram message */}
-          <motion.div 
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.6 }}
-            className="lg:col-span-5 flex justify-center"
-          >
-            <div className="w-full max-w-sm rounded-3xl border border-sky-500/30 bg-gradient-to-br from-[#17344F] to-[#265582] p-6 shadow-2xl relative flex flex-col justify-between" id="telegram-mockup">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-sky-400 animate-ping" />
-                  <span className="text-xs font-bold font-mono tracking-wider text-sky-300 uppercase">TELEGRAM БОТ</span>
-                </div>
-                {/* Mascot RR7 looking at clock */}
-                <img 
-                  src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR7.png" 
-                  alt="RR с часами" 
-                  className="w-10 h-10 object-contain"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-
-              <div className="space-y-3 font-mono text-[11px] leading-relaxed text-slate-100">
-                <p className="text-slate-400">🤖 [ИИ Рапорт Бот] · 18:15</p>
-                <div className="bg-[#17344F]/85 border border-white/5 rounded-xl p-3 space-y-1.5 text-slate-200">
-                  <p><strong className="text-[#F4EE8E]">🔔 НАПОМИНАНИЕ: ФАКТ ЗА СМЕНУ</strong></p>
-                  <p>Привет, <span className="text-sky-300">Дмитрий</span>!</p>
-                  <p>По вашему графику смена завершилась в 18:00. Вы забыли сдать отчет **Факт за день**.</p>
-                  <p>⏳ Напоминание пришло в личку, так как прошло 15 минут.</p>
-                  <p className="text-amber-100 italic">Пожалуйста, надиктуйте отчет голосом или напишите текстом.</p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex gap-2">
-                <button 
-                  onClick={onOpenLoginModal}
-                  className="flex-1 py-2 text-center text-[10px] font-bold rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-900 cursor-pointer transition-colors"
-                >
-                  Заполнить отчет 📋
-                </button>
-              </div>
-            </div>
-          </motion.div>
-
-        </div>
-      </section>
-
       {/* 4. PRICING & CALCULATOR SECTION */}
-      <section className="py-20 px-4 sm:px-6 bg-[#17344F]/10" id="calculator-section">
+      <section className="py-8 px-4 sm:px-6 bg-[#17344F]/10" id="calculator-section">
         <div className="mx-auto max-w-7xl text-center space-y-12">
           
           <div className="space-y-4 max-w-3xl mx-auto">
@@ -665,7 +583,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
       </section>
 
       {/* 5. INTERACTIVE REVIEWS & FEEDBACK FORM */}
-      <section className="py-20 px-4 sm:px-6 bg-[#265582]/10 border-t border-white/10" id="reviews-section">
+      <section className="py-8 px-4 sm:px-6 bg-[#265582]/10 border-t border-white/10" id="reviews-section">
         <div className="mx-auto max-w-7xl">
           
           <div className="text-center space-y-4 mb-12">
@@ -694,7 +612,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6 }}
-              className="lg:col-span-7" 
+              className="lg:col-span-7 space-y-6" 
               id="reviews-carousel-container"
             >
               <VerticalReviewsCarousel 
@@ -702,6 +620,15 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                 activeIndex={activeReviewIndex}
                 onChangeIndex={setActiveReviewIndex}
               />
+
+              {reviews[activeReviewIndex] && (
+                <CommentsSection 
+                  entityId={`review-${reviews[activeReviewIndex].id}`} 
+                  entityType="review" 
+                  entityTitle={`Отзыв от ${reviews[activeReviewIndex].name}`} 
+                  currentUser={currentUser} 
+                />
+              )}
             </motion.div>
 
             {/* Submit review form */}
@@ -715,8 +642,17 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
             >
               <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/5 to-white/10" />
               
-              <h4 className="text-lg font-bold text-white mb-1 font-sans">Оставить анонимный отзыв</h4>
-              <p className="text-slate-300 text-xs mb-6">Ваше мнение улучшает качество работы нашего ИИ-алгоритма.</p>
+              {currentUser ? (
+                <>
+                  <h4 className="text-lg font-bold text-amber-200 mb-1 font-sans">Оставить отзыв как {currentUser.name}</h4>
+                  <p className="text-slate-300 text-xs mb-6">Вы вошли как зарегистрированный пользователь.</p>
+                </>
+              ) : (
+                <>
+                  <h4 className="text-lg font-bold text-white mb-1 font-sans">Оставить анонимный отзыв</h4>
+                  <p className="text-slate-300 text-xs mb-6">Ваше мнение улучшает качество работы нашего ИИ-алгоритма.</p>
+                </>
+              )}
 
               <form onSubmit={handleSubmitReview} className="space-y-4">
                 <div>
@@ -724,10 +660,11 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                   <input
                     type="text"
                     required
-                    value={newReviewName}
+                    disabled={!!currentUser}
+                    value={currentUser ? currentUser.name : newReviewName}
                     onChange={(e) => setNewReviewName(e.target.value)}
                     placeholder="Например, Виталий"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors disabled:opacity-50"
                   />
                 </div>
 
@@ -735,10 +672,11 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
                   <label className="block text-xs text-slate-300 font-semibold mb-1">Компания / Сфера деятельности</label>
                   <input
                     type="text"
-                    value={newReviewCompany}
+                    disabled={!!currentUser}
+                    value={currentUser ? (currentUser.position || 'Пользователь ИИ Рапорт') : newReviewCompany}
                     onChange={(e) => setNewReviewCompany(e.target.value)}
                     placeholder="Например, ООО «ПродОпт»"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors disabled:opacity-50"
                   />
                 </div>
 
@@ -763,7 +701,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal }: LandingPag
 
                 <button
                   type="submit"
-                  disabled={isSubmittingReview || !newReviewName.trim() || !newReviewText.trim()}
+                  disabled={isSubmittingReview || (!currentUser && !newReviewName.trim()) || !newReviewText.trim()}
                   className="w-full py-3 rounded-xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-xs uppercase tracking-wider hover:brightness-110 active:scale-98 disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer font-sans"
                 >
                   Отправить отзыв

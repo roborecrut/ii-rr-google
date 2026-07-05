@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /cabinet/
+Disallow: /api/
+
+Sitemap: https://ii-rr.online/sitemap.xml

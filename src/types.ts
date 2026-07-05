@@ -129,3 +129,18 @@ export interface FAQItem {
   answer: string;
   category: string;
 }
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  readTime: string;
+  author: string;
+  authorRole: string;
+  image: string;
+  summary: string;
+  seoDesc: string;
+  seoKeywords: string;
+  content: string; // Markdown text
+}

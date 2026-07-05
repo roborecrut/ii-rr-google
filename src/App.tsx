@@ -4,6 +4,7 @@ import Footer from './components/Footer';
 import LandingPage from './pages/LandingPage';
 import WikiPage from './pages/WikiPage';
 import OfertaPage from './pages/OfertaPage';
+import BlogPage from './pages/BlogPage';
 import CabinetPage from './pages/CabinetPage';
 import AIAssistant from './components/AIAssistant';
 import InteractiveNetworkBackground from './components/InteractiveNetworkBackground';
@@ -128,6 +129,7 @@ export default function App() {
           <LandingPage 
             onNavigate={handleNavigate}
             onOpenLoginModal={() => setIsLoginModalOpen(true)}
+            currentUser={currentUser}
           />
         )}
         {currentPath === '/wiki' && (
@@ -135,6 +137,16 @@ export default function App() {
         )}
         {currentPath === '/oferta' && (
           <OfertaPage />
+        )}
+        {currentPath === '/blog' && (
+          <BlogPage onNavigate={handleNavigate} currentUser={currentUser} />
+        )}
+        {currentPath.startsWith('/blog/post') && (
+          <BlogPage 
+            onNavigate={handleNavigate} 
+            activePostId={currentPath.replace('/blog/post', '')} 
+            currentUser={currentUser}
+          />
         )}
         {currentPath.startsWith('/cabinet') && (
           <CabinetPage 

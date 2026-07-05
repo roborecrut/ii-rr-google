@@ -174,21 +174,27 @@ ${JSON.stringify(wikiFAQ, null, 2)}
             </span>
           </div>
  
-          {/* Categories Horizontal Row */}
-          <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-none" id="category-selector-row">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs transition-all font-semibold border cursor-pointer ${
-                  activeCategory === cat
-                    ? 'bg-gradient-to-r from-[#17344F] to-[#265582] text-[#F4EE8E] border-amber-200/30'
-                    : 'bg-[#17344F]/30 border-white/5 text-slate-400 hover:text-white'
-                }`}
+          {/* Categories Dropdown Selection */}
+          <div className="relative w-full" id="category-selector-dropdown">
+            <label className="block text-[10px] font-bold text-amber-200 uppercase tracking-wider mb-2 font-mono">
+              Выберите тему Базы Знаний:
+            </label>
+            <div className="relative">
+              <select
+                value={activeCategory}
+                onChange={(e) => setActiveCategory(e.target.value)}
+                className="w-full px-4.5 py-3 rounded-xl bg-[#1E4468]/60 border border-white/10 text-white text-xs font-semibold focus:outline-none focus:border-[#E7C768] appearance-none cursor-pointer pr-10"
               >
-                {cat}
-              </button>
-            ))}
+                {categories.map((cat) => (
+                  <option key={cat} value={cat} className="bg-[#17344F] text-white">
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                <ChevronDown size={14} />
+              </div>
+            </div>
           </div>
 
           {/* Accordion List */}

@@ -67,15 +67,15 @@ export default function Header({
             База знаний (Вики)
           </button>
           <button
-            onClick={() => onNavigate('/oferta')}
+            onClick={() => onNavigate('/blog')}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all ${
-              currentPath === '/oferta' 
+              currentPath.startsWith('/blog') 
                 ? 'bg-gradient-to-r from-[#17344F] to-[#265582] text-[#F4EE8E] border border-amber-200/20' 
                 : 'text-slate-300 hover:text-white'
             }`}
-            id="nav-oferta"
+            id="nav-blog"
           >
-            Оферта
+            Блог
           </button>
         </nav>
 
@@ -222,13 +222,13 @@ export default function Header({
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
-                onNavigate('/oferta');
+                onNavigate('/blog');
               }}
               className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold transition-all flex items-center gap-2.5 ${
-                currentPath === '/oferta' ? 'bg-[#1E4468] text-[#F4EE8E]' : 'text-slate-300 hover:bg-white/5'
+                currentPath.startsWith('/blog') ? 'bg-[#1E4468] text-[#F4EE8E]' : 'text-slate-300 hover:bg-white/5'
               }`}
             >
-              <span>📄</span> Оферта сервиса
+              <span>✍️</span> Блог компании
             </button>
           </div>
         </div>
