@@ -244,40 +244,8 @@ export default function InteractiveFlowSimulator() {
         </div>
       </div>
 
-      {/* Mobile/Tablet Horizontal Steps Slider */}
-      <div className="col-span-1 lg:hidden flex overflow-x-auto gap-2 pb-3 scrollbar-none snap-x snap-mandatory" id="simulator-steps-mobile-list">
-        {steps.map((step) => {
-          const isActive = activeStep === step.id;
-          return (
-            <button
-              key={step.id}
-              onClick={() => handleStepSelect(step.id)}
-              className={`p-3.5 rounded-2xl text-left border transition-all cursor-pointer flex gap-3 items-center flex-shrink-0 snap-center min-w-[240px] ${
-                isActive
-                  ? 'bg-[#1E4468] border-[#F4EE8E]/40 shadow-lg scale-100'
-                  : 'bg-white/5 border-white/5'
-              }`}
-            >
-              <div className={`p-2 rounded-xl flex-shrink-0 ${
-                isActive 
-                  ? 'bg-gradient-to-br from-[#F4EE8E] to-[#D99E41] text-slate-900' 
-                  : 'bg-white/10 text-slate-300'
-              }`}>
-                {step.icon}
-              </div>
-              <div className="min-w-0">
-                <h4 className={`text-xs font-extrabold truncate ${isActive ? 'text-[#F4EE8E]' : 'text-slate-300'}`}>
-                  {step.title}
-                </h4>
-                <p className="text-[9px] text-slate-400 truncate">{step.shortDesc}</p>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Left Column: Navigation controls for all 9 steps with progress bars (Desktop only) */}
-      <div className="hidden lg:col-span-5 lg:flex flex-col gap-2 max-h-[640px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10" id="simulator-steps-list">
+      {/* Navigation controls for all 9 steps with progress bars (Vertical list for both mobile and desktop) */}
+      <div className="col-span-1 lg:col-span-5 flex flex-col gap-2 max-h-[450px] lg:max-h-[640px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10" id="simulator-steps-list">
         {steps.map((step, idx) => {
           const isActive = activeStep === step.id;
           return (

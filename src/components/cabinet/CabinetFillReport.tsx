@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Mic, Send, AlertCircle, RefreshCw, MapPin, Navigation } from 'lucide-react';
 import { ReportTemplate, SubmittedReport, UserProfile, UserRole, NotificationItem } from '../../types';
+import VoiceEqualizer from '../VoiceEqualizer';
 
 interface CabinetFillReportProps {
   currentUser: UserProfile | null;
@@ -767,9 +768,12 @@ ${answersText}
             </div>
 
             {recordingFieldId === 'ai-fast-fill' && (
-              <span className="text-[10px] text-red-400 font-mono animate-pulse block mt-1 relative z-10">
-                🎤 Идет запись голоса... {recordingTimer}s (ИИ слушает ваши слова)
-              </span>
+              <div className="mt-2 relative z-10 space-y-1">
+                <VoiceEqualizer isActive={true} />
+                <span className="text-[11px] text-slate-400 font-mono block">
+                  Продолжительность записи: {recordingTimer}s
+                </span>
+              </div>
             )}
 
             <div className="flex justify-end pt-1 relative z-10">
@@ -922,9 +926,12 @@ ${answersText}
                         </button>
                       </div>
                       {recordingFieldId === field.id && (
-                        <span className="text-[10px] text-red-400 font-mono animate-pulse block">
-                          🎤 Идет запись голоса... {recordingTimer}s (ИИ слушает)
-                        </span>
+                        <div className="mt-1 space-y-1">
+                          <VoiceEqualizer isActive={true} />
+                          <span className="text-[11px] text-slate-400 font-mono block">
+                            Продолжительность записи: {recordingTimer}s
+                          </span>
+                        </div>
                       )}
                     </div>
                   )}

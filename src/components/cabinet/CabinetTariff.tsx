@@ -1,6 +1,7 @@
 import React from 'react';
 import { Landmark, ArrowUpRight, TrendingUp } from 'lucide-react';
 import { TariffState, Transaction, UserProfile } from '../../types';
+import TariffCalculator from '../TariffCalculator';
 
 interface CabinetTariffProps {
   tariff: TariffState;
@@ -66,30 +67,64 @@ export default function CabinetTariff({
         </div>
       </div>
 
-      {/* Top up container */}
-      <div className="p-5 rounded-2xl border border-white/5 bg-[#17344F]/40 space-y-4">
-        <h4 className="text-sm font-semibold text-white">Докупить места сотрудников</h4>
-        <div className="flex flex-col sm:flex-row gap-3 items-end">
-          <div className="flex-1 w-full text-xs">
-            <label className="block text-[10px] text-slate-400 font-bold uppercase mb-1">Количество мест (+290 ₽ / чел в мес)</label>
-            <input 
-              type="number" 
-              min="1" 
-              value={topUpSeats}
-              onChange={(e) => setTopUpSeats(parseInt(e.target.value) || 1)}
-              className="w-full px-3 py-2 rounded-xl bg-[#1E4468]/60 border border-white/10 text-white text-xs focus:outline-none focus:border-amber-200/30"
-            />
-          </div>
-          <button
-            onClick={handleTopUpTariff}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-xs uppercase hover:brightness-110 active:scale-98 transition-all cursor-pointer h-10 flex items-center justify-center gap-1"
-          >
-            <ArrowUpRight size={13} />
-            Активировать за {(topUpSeats * 290)} ₽
-          </button>
-        </div>
+      {/* Unified Tariff & ROI Calculator */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-semibold text-white">Расчет и активация корпоративного тарифа</h4>
+        <TariffCalculator 
+          initialEmployees={tariff.activeEmployeesCount || 10}
+          actionButtonText="Активировать подписку"
+          onAction={(selectedEmployees, selectedMonths, totalCost) => {
+            if (tariff.balance < totalCost) {
+              alert(`Недостаточно средств. Ваш баланс: ${tariff.balance} ₽. Необходимая сумма: ${totalCost} ₽. Пожалуйста, пополните баланс на ${(totalCost - tariff.balance)} ₽ через Робокассу.`);
+              return;
+            }
 
-        <div className="pt-3.5 flex justify-between items-center text-xs border-t border-white/5">
+            const nextBalance = tariff.balance - totalCost;
+            
+            // Calculate new expiration date
+            const currentExpiry = new Date(tariff.expiresAt || new Date().toISOString().split('T')[0]);
+            const today = new Date();
+            const baseDate = currentExpiry > today ? currentExpiry : today;
+            const nextExpiry = new Date(baseDate);
+            nextExpiry.setMonth(nextExpiry.getMonth() + selectedMonths);
+            const nextExpiryStr = nextExpiry.toISOString().split('T')[0];
+
+            const nextTariff = {
+              ...tariff,
+              activeEmployeesCount: selectedEmployees,
+              expiresAt: nextExpiryStr,
+              balance: nextBalance
+            };
+            setTariff(nextTariff);
+
+            // Save transaction
+            const newTx: Transaction = {
+              id: 'tx-' + Date.now(),
+              amount: -totalCost,
+              type: 'SPENT',
+              date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+              description: `Активация тарифа: ${selectedEmployees} сотр. на ${selectedMonths} мес. со скидкой`
+            };
+            const nextTxs = [newTx, ...transactions];
+            
+            alert(`Тариф успешно активирован! Количество сотрудников: ${selectedEmployees} чел. Подписка продлена до ${nextExpiryStr}. Списано ${totalCost} ₽.`);
+            
+            saveStateToServer({ 
+              company, 
+              departments, 
+              templates, 
+              reports, 
+              transactions: nextTxs, 
+              notifications, 
+              tariff: nextTariff, 
+              crmCompanies, 
+              mockEmployees 
+            });
+          }}
+        />
+
+        {/* Additional actions */}
+        <div className="p-4 rounded-2xl border border-white/5 bg-[#17344F]/40 flex flex-wrap justify-between items-center gap-3 text-xs">
           <button 
             onClick={() => {
               if (tariff.activeEmployeesCount > 1) {
@@ -99,9 +134,9 @@ export default function CabinetTariff({
                 saveStateToServer({ company, departments, templates, reports, transactions, notifications, tariff: nextTariff, crmCompanies, mockEmployees });
               }
             }}
-            className="text-slate-400 hover:text-slate-200 text-[10px] underline cursor-pointer"
+            className="text-slate-400 hover:text-slate-200 text-xs underline cursor-pointer"
           >
-            Даунгрейд тарифа (уменьшить активные места)
+            Даунгрейд тарифа (уменьшить активные места на 1)
           </button>
 
           <button 
@@ -110,7 +145,7 @@ export default function CabinetTariff({
               setWithdrawalAmount(String(currentUser?.bonusesEarned || 2450));
               setIsCashOutModalOpen(true);
             }}
-            className="text-[#F4EE8E] hover:text-[#E7C768] text-[11px] font-bold cursor-pointer flex items-center gap-1.5 bg-[#1E4468] px-3.5 py-1.5 rounded-xl border border-amber-200/20 active:scale-95 transition-all shadow"
+            className="text-[#F4EE8E] hover:text-[#E7C768] text-xs font-bold cursor-pointer flex items-center gap-1.5 bg-[#1E4468] px-3.5 py-1.5 rounded-xl border border-amber-200/20 active:scale-95 transition-all shadow"
           >
             <Landmark size={12} />
             Вывод бонусов / Возврат средств

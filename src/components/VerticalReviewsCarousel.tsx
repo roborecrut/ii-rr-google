@@ -15,12 +15,20 @@ interface VerticalReviewsCarouselProps {
   reviews: Review[];
   activeIndex: number;
   onChangeIndex: (index: number) => void;
+  isCommentsOpen?: boolean;
+  isWriteReviewOpen?: boolean;
+  onToggleComments?: () => void;
+  onToggleWriteReview?: () => void;
 }
 
 export default function VerticalReviewsCarousel({
   reviews,
   activeIndex,
-  onChangeIndex
+  onChangeIndex,
+  isCommentsOpen = false,
+  isWriteReviewOpen = false,
+  onToggleComments,
+  onToggleWriteReview
 }: VerticalReviewsCarouselProps) {
   // Swipe & Drag gesture state
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
@@ -259,6 +267,41 @@ export default function VerticalReviewsCarousel({
                 </p>
                 <p className="text-slate-300 leading-relaxed font-sans">{activeReview.officialResponse}</p>
               </div>
+            </div>
+
+            {/* Action buttons inside the active review card */}
+            <div className="flex flex-wrap gap-2.5 pt-3.5 border-t border-white/10" id="review-card-actions">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleComments?.();
+                }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer ${
+                  isCommentsOpen
+                    ? 'bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 shadow-lg scale-102 font-bold'
+                    : 'bg-[#1E4468]/80 hover:bg-[#265582] text-slate-200 border border-white/10 hover:border-amber-200/20'
+                }`}
+                id="toggle-review-comments-btn"
+              >
+                <MessageSquare size={13} />
+                <span>Комментарии {isCommentsOpen ? '▲' : '▼'}</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleWriteReview?.();
+                }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer ${
+                  isWriteReviewOpen
+                    ? 'bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 shadow-lg scale-102 font-bold'
+                    : 'bg-[#1E4468]/80 hover:bg-[#265582] text-slate-200 border border-white/10 hover:border-amber-200/20'
+                }`}
+                id="toggle-review-form-btn"
+              >
+                <span>✍️</span>
+                <span>Оставить отзыв {isWriteReviewOpen ? '▲' : '▼'}</span>
+              </button>
             </div>
           </div>
         )}

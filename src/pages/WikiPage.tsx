@@ -76,31 +76,20 @@ ${JSON.stringify(wikiFAQ, null, 2)}
             <BookOpen size={13} />
             <span>Информационная Вики</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight bg-gradient-to-r from-white via-slate-200 to-[#F4EE8E] bg-clip-text text-transparent">
-            База Знаний ИИ Рапорт RR
-          </h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-2xl mx-auto">
+            <img 
+              src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR8.png" 
+              alt="Робот RR Вики" 
+              className="w-16 h-16 sm:w-20 sm:h-20 object-contain animate-pulse-slow drop-shadow-[0_0_8px_rgba(231,199,104,0.25)] flex-shrink-0"
+              referrerPolicy="no-referrer"
+            />
+            <h2 className="text-[36px] font-black tracking-tight leading-tight bg-gradient-to-r from-white via-slate-200 to-[#F4EE8E] bg-clip-text text-transparent text-center sm:text-left">
+              База Знаний ИИ Рапорт RR
+            </h2>
+          </div>
           <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
             Здесь собраны подробные ответы на 30 ключевых вопросов о работе системы, интеграции с Telegram, настройке графиков и тарифах.
           </p>
-        </div>
-
-        {/* Mascot representation above answers (RR8 - Robot with question mark and clock) */}
-        <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-3xl border border-amber-200/30 bg-gradient-to-r from-[#17344F] to-[#265582] relative overflow-hidden" id="wiki-mascot-box">
-          {/* Glass layout reflection */}
-          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-white/5 to-transparent" />
-          
-          <img 
-            src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR8.png" 
-            alt="Робот RR Вики" 
-            className="w-24 h-24 sm:w-28 sm:h-28 object-contain animate-pulse-slow drop-shadow-[0_0_10px_rgba(231,199,104,0.25)] flex-shrink-0"
-            referrerPolicy="no-referrer"
-          />
-          <div className="space-y-2">
-            <h4 className="text-base font-bold text-amber-200 font-sans">Ищете быстрый ответ?</h4>
-            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-              «Я — маскот-исследователь RR. Я держу часы и помогаю ориентироваться в нашей Базе Знаний. Если вы не нашли ответ в списке — введите ваш вопрос в <strong className="text-amber-200">Умный ИИ-поиск</strong> ниже, и я мгновенно найду ответ!»
-            </p>
-          </div>
         </div>
 
         {/* AI SMART SEARCH ROW */}

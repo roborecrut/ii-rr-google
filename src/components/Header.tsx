@@ -36,7 +36,7 @@ export default function Header({
             referrerPolicy="no-referrer"
           />
           <div>
-            <h1 className="text-lg font-extrabold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] bg-clip-text text-transparent leading-none font-sans tracking-wide">
+            <h1 className="text-lg font-extrabold leading-none font-sans tracking-wide shimmer-text-effect">
               ИИ РАПОРТ
             </h1>
           </div>

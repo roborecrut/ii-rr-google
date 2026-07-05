@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Sparkles, MessageSquare, Mic, ShieldAlert, Calendar, Users, Sliders, Check, HelpCircle, ArrowRight, MessageCircle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Sparkles, MessageSquare, Mic, ShieldAlert, Calendar, Users, Sliders, Check, HelpCircle, ArrowRight, MessageCircle, TrendingUp, Clock, Coins, Briefcase } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import TypewriterText from '../components/TypewriterText';
 import VerticalReviewsCarousel from '../components/VerticalReviewsCarousel';
 import InteractiveFlowSimulator from '../components/InteractiveFlowSimulator';
 import CommentsSection from '../components/CommentsSection';
+import TariffCalculator from '../components/TariffCalculator';
 import { UserProfile } from '../types';
 
 interface Review {
@@ -27,6 +28,8 @@ export default function LandingPage({ onNavigate, onOpenLoginModal, currentUser 
   // Calculator state
   const [employeesCount, setEmployeesCount] = useState<number>(10);
   const [tariffType, setTariffType] = useState<'trial' | 'business'>('business');
+  const [managerHourlyRate, setManagerHourlyRate] = useState<number>(1500);
+  const [hoursSpentManual, setHoursSpentManual] = useState<number>(1.5);
 
   // Reviews state
   const [reviews, setReviews] = useState<Review[]>([
@@ -87,6 +90,8 @@ export default function LandingPage({ onNavigate, onOpenLoginModal, currentUser 
   ]);
 
   const [activeReviewIndex, setActiveReviewIndex] = useState(0);
+  const [showComments, setShowComments] = useState(false);
+  const [showWriteReview, setShowWriteReview] = useState(false);
 
   const [newReviewName, setNewReviewName] = useState('');
   const [newReviewCompany, setNewReviewCompany] = useState('');
@@ -167,7 +172,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal, currentUser 
           >
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-amber-200/30 bg-[#17344F]/60 text-amber-200 text-xs font-semibold tracking-wider uppercase font-mono shadow-md">
               <Sparkles size={13} className="text-amber-300 animate-spin" />
-              <span>Главное УТП: ИИ Рекомендации сотрудникам</span>
+              <span>ИИ Рекомендации сотрудникам</span>
             </div>
 
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight bg-gradient-to-r from-white via-slate-100 to-[#F4EE8E] bg-clip-text text-transparent">
@@ -198,7 +203,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal, currentUser 
             <div className="flex flex-wrap gap-4 pt-4">
               <button
                 onClick={onOpenLoginModal}
-                className="px-8 py-4 rounded-2xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 shadow-[0_8px_25px_rgba(217,158,65,0.4)] hover:shadow-[0_12px_30px_rgba(217,158,65,0.6)] hover:brightness-110 active:scale-95 transition-all cursor-pointer text-sm flex items-center gap-2 font-sans"
+                className="px-8 py-4 rounded-2xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 shadow-[0_8px_25px_rgba(217,158,65,0.4)] hover:shadow-[0_12px_30px_rgba(217,158,65,0.6)] hover:brightness-110 active:scale-95 transition-all cursor-pointer text-sm flex items-center gap-2 font-sans shimmer-effect"
                 id="hero-cta-trial"
               >
                 Попробовать 7 дней бесплатно
@@ -237,7 +242,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal, currentUser 
                 referrerPolicy="no-referrer"
               />
               <div className="relative bg-[#17344F]/85 border border-amber-200/20 rounded-2xl p-4.5 text-xs text-slate-100 italic mt-4 text-center leading-relaxed">
-                "Привет! Я робот RR с ручкой и планшетом. Я помогу заполнить ваши отчеты за считанные секунды и дам полезные подсказки для вашей работы!"
+                "Привет! Я робот RR. Я помогу заполнить ваши отчеты за считанные секунды и дам полезные подсказки для вашей работы!"
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-[#17344F]/85" />
               </div>
             </div>
@@ -275,7 +280,7 @@ export default function LandingPage({ onNavigate, onOpenLoginModal, currentUser 
                 <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-200">
                   <Sparkles size={20} className="animate-pulse" />
                 </div>
-                <h4 className="text-xl font-extrabold text-[#F4EE8E] font-sans">Главное УТП: Персональные рекомендации ИИ</h4>
+                <h4 className="text-xl font-extrabold text-[#F4EE8E] font-sans">Персональные рекомендации ИИ</h4>
                 <p className="text-slate-200 text-sm leading-relaxed">
                   После заполнения отчета (на день, неделю или месяц) ИИ моментально анализирует показатели сотрудника, сопоставляет их с обязанностями и выдает <strong className="text-amber-200">3 конкретные рекомендации</strong> по повышению продуктивности. Сотрудник обучается прямо во время работы!
                 </p>
@@ -420,162 +425,108 @@ export default function LandingPage({ onNavigate, onOpenLoginModal, currentUser 
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start text-left">
+          <div className="flex flex-col gap-10 w-full text-left mt-10">
             
-            {/* Trial Card */}
+            {/* Section 1: Horizontal Trial Card (Full Width) */}
             <motion.div 
-              initial={{ opacity: 0, x: -60 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6 }}
-              className="lg:col-span-5 rounded-3xl border-2 border-amber-200/30 bg-gradient-to-b from-[#17344F] to-[#265582] p-8 shadow-2xl relative overflow-hidden flex flex-col justify-between h-full group"
+              className="w-full rounded-3xl border-2 border-amber-200/30 bg-gradient-to-r from-[#17344F] via-[#1E4468] to-[#265582] p-6 sm:p-8 shadow-2xl relative overflow-hidden group"
+              id="horizontal-trial-block"
             >
               <div className="absolute top-0 right-0 p-2 text-[10px] font-bold tracking-widest text-[#F4EE8E] uppercase bg-amber-500/20 rounded-bl-xl border-l border-b border-amber-200/20 font-mono">
                 ТРИАЛ
               </div>
               
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-2xl font-bold text-white font-sans">Пробный период</h4>
-                  <p className="text-slate-300 text-xs mt-1">Оцените все преимущества ИИ отчетности абсолютно бесплатно</p>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                
+                {/* Left: Info & Big price */}
+                <div className="lg:col-span-4 space-y-4 text-left">
+                  <div>
+                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white font-sans tracking-tight">
+                      Пробный период
+                    </h4>
+                    <p className="text-slate-300 text-xs mt-1 leading-relaxed">
+                      Оцените все преимущества ИИ-отчетности абсолютно бесплатно в течение 7 дней.
+                    </p>
+                  </div>
+
+                  <div className="text-4xl sm:text-5xl font-black text-[#F4EE8E] font-sans">
+                    0 ₽ <span className="text-xs sm:text-sm text-slate-300 font-normal">/ 7 дней триала</span>
+                  </div>
+
+                  {/* Mascot integrated */}
+                  <div className="flex items-center gap-3 bg-[#17344F]/40 p-3 rounded-2xl border border-white/5">
+                    <img 
+                      src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR5.png" 
+                      alt="Робот RR" 
+                      className="w-10 h-10 object-contain animate-pulse-slow shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="text-[10px] text-slate-300 italic leading-snug">
+                      <strong className="text-[#F4EE8E] font-bold not-italic">Робот RR:</strong> "Дарим сияние и 7 дней свободы! Тестируйте без обязательств!"
+                    </div>
+                  </div>
                 </div>
 
-                <div className="text-4xl font-black text-[#F4EE8E] font-sans">
-                  0 ₽ <span className="text-xs text-slate-300 font-normal">/ 7 дней</span>
+                {/* Middle: Beautiful checklist of benefits */}
+                <div className="lg:col-span-5 text-left bg-white/5 p-5 rounded-2xl border border-white/5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-3 font-mono">Что входит в тест-драйв:</span>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-200">
+                    <li className="flex items-start gap-2">
+                      <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <span>Доступно бесплатно <strong className="text-[#F4EE8E]">50 отчетов</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <span>Без ограничений по отделам</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <span>Неограниченно руководителей</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <span>ИИ-автогенерация структуры</span>
+                    </li>
+                    <li className="flex items-start gap-2 sm:col-span-2">
+                      <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <span>Интеграция с Telegram и личный график</span>
+                    </li>
+                  </ul>
                 </div>
 
-                <ul className="space-y-3.5 text-xs text-slate-200">
-                  <li className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Доступно бесплатно <strong className="text-[#F4EE8E]">50 отчетов</strong> сотрудников</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Без ограничений по числу сотрудников и отделов</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Без ограничений по количеству руководителей</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Бесплатное ИИ-создание должностей и рапортов</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Интеграция с Telegram и личный график</span>
-                  </li>
-                </ul>
+                {/* Right: Large button */}
+                <div className="lg:col-span-3 flex flex-col justify-center">
+                  <button
+                    onClick={onOpenLoginModal}
+                    className="w-full py-4 rounded-xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-xs sm:text-sm uppercase tracking-wider hover:brightness-110 active:scale-98 transition-all cursor-pointer font-sans text-center shadow-lg shadow-amber-500/10 shimmer-effect"
+                  >
+                    Запустить триал бесплатно
+                  </button>
+                  <p className="text-[10px] text-slate-400 mt-2 text-center">
+                    Без привязки банковской карты
+                  </p>
+                </div>
+
               </div>
-
-              {/* Joyful Mascot RR5 */}
-              <div className="mt-8 flex items-center gap-4 bg-[#17344F]/40 p-4 rounded-2xl border border-white/5">
-                <img 
-                  src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR5.png" 
-                  alt="Радостный Робот RR" 
-                  className="w-14 h-14 object-contain animate-pulse-slow flex-shrink-0"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="text-[11px]">
-                  <p className="text-[#F4EE8E] font-bold">Радостный RR:</p>
-                  <p className="text-slate-300 italic">"Дарим сияние и 7 дней полной свободы! Регистрируйтесь, это ни к чему не обязывает!"</p>
-                </div>
-              </div>
-
-              <button
-                onClick={onOpenLoginModal}
-                className="mt-6 w-full py-3.5 rounded-xl font-bold bg-white text-[#17344F] text-xs uppercase tracking-wider hover:bg-slate-100 active:scale-98 transition-all cursor-pointer font-sans text-center"
-              >
-                Запустить триал бесплатно
-              </button>
             </motion.div>
 
-            {/* Business Card with Slider */}
+            {/* Section 2: Unified Tariff & ROI Calculator (Full Width) */}
             <motion.div 
-              initial={{ opacity: 0, x: 60 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6 }}
-              className="lg:col-span-7 rounded-3xl border border-white/15 bg-gradient-to-br from-[#17344F] to-[#265582] p-8 shadow-2xl flex flex-col justify-between h-full"
+              className="w-full"
             >
-              
-              <div className="space-y-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="text-2xl font-bold text-white font-sans">Тариф «Бизнес»</h4>
-                    <p className="text-slate-400 text-xs mt-1">Оптимальное решение для эффективных команд любого масштаба</p>
-                  </div>
-                  <div className="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                    Рекомендуем
-                  </div>
-                </div>
-
-                <div className="bg-[#17344F]/40 p-6 rounded-2xl border border-white/5 space-y-4">
-                  <div className="flex justify-between items-center text-xs text-slate-200">
-                    <span>Количество сотрудников:</span>
-                    <span className="font-mono text-base font-bold text-amber-200">{employeesCount} чел.</span>
-                  </div>
-                  
-                  {/* Slider Control */}
-                  <div className="relative pt-2">
-                    <input 
-                      type="range" 
-                      min="1" 
-                      max="150" 
-                      value={employeesCount}
-                      onChange={(e) => setEmployeesCount(parseInt(e.target.value))}
-                      className="w-full h-2 bg-[#1E4468]/60 rounded-lg appearance-none cursor-pointer accent-[#D99E41]"
-                      id="employees-slider"
-                    />
-                    <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
-                      <span>1</span>
-                      <span>50</span>
-                      <span>100</span>
-                      <span>150+</span>
-                    </div>
-                  </div>
-
-                  {/* Pricing summary */}
-                  <div className="pt-4 border-t border-white/5 flex flex-wrap justify-between items-end gap-2">
-                    <div>
-                      <p className="text-[10px] text-slate-400">Ставка за 1 сотрудника:</p>
-                      <p className="text-lg font-bold text-white font-mono">290 ₽ / месяц</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] text-slate-400">Итого в месяц:</p>
-                      <p className="text-2xl sm:text-3xl font-black text-[#F4EE8E] font-sans">
-                        {businessMonthlyTotal.toLocaleString('ru-RU')} ₽ <span className="text-xs text-slate-300 font-normal">/ мес</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-300">
-                  <li className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Без лимита по отчетам</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Без лимита по отделам и шефам</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>ИИ-генерация структуры компании</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Саммари и Сводная ИИ-аналитика</span>
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                onClick={onOpenLoginModal}
-                className="mt-8 w-full py-4 rounded-xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-xs uppercase tracking-wider hover:brightness-110 active:scale-98 shadow-md transition-all cursor-pointer font-sans text-center"
-              >
-                Купить для {employeesCount} сотрудников
-              </button>
+              <TariffCalculator 
+                onAction={onOpenLoginModal} 
+                actionButtonText="Купить подписку" 
+                initialEmployees={15}
+              />
             </motion.div>
 
           </div>
@@ -604,110 +555,135 @@ export default function LandingPage({ onNavigate, onOpenLoginModal, currentUser 
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="max-w-2xl mx-auto space-y-8" id="reviews-interactive-container">
             
             {/* Reviews display list (Vertical Carousel with 2 preview blocks on each side) */}
             <motion.div 
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6 }}
-              className="lg:col-span-7 space-y-6" 
+              className="w-full space-y-6" 
               id="reviews-carousel-container"
             >
               <VerticalReviewsCarousel 
                 reviews={reviews}
                 activeIndex={activeReviewIndex}
-                onChangeIndex={setActiveReviewIndex}
+                onChangeIndex={(idx) => {
+                  setActiveReviewIndex(idx);
+                }}
+                isCommentsOpen={showComments}
+                isWriteReviewOpen={showWriteReview}
+                onToggleComments={() => {
+                  setShowComments(!showComments);
+                  setShowWriteReview(false);
+                }}
+                onToggleWriteReview={() => {
+                  setShowWriteReview(!showWriteReview);
+                  setShowComments(false);
+                }}
               />
-
-              {reviews[activeReviewIndex] && (
-                <CommentsSection 
-                  entityId={`review-${reviews[activeReviewIndex].id}`} 
-                  entityType="review" 
-                  entityTitle={`Отзыв от ${reviews[activeReviewIndex].name}`} 
-                  currentUser={currentUser} 
-                />
-              )}
             </motion.div>
 
-            {/* Submit review form */}
-            <motion.div 
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6 }}
-              className="lg:col-span-5 rounded-3xl border border-amber-200/30 bg-gradient-to-b from-[#17344F] to-[#265582] p-8 shadow-2xl relative overflow-hidden" 
-              id="review-form-box"
-            >
-              <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/5 to-white/10" />
-              
-              {currentUser ? (
-                <>
-                  <h4 className="text-lg font-bold text-amber-200 mb-1 font-sans">Оставить отзыв как {currentUser.name}</h4>
-                  <p className="text-slate-300 text-xs mb-6">Вы вошли как зарегистрированный пользователь.</p>
-                </>
-              ) : (
-                <>
-                  <h4 className="text-lg font-bold text-white mb-1 font-sans">Оставить анонимный отзыв</h4>
-                  <p className="text-slate-300 text-xs mb-6">Ваше мнение улучшает качество работы нашего ИИ-алгоритма.</p>
-                </>
-              )}
-
-              <form onSubmit={handleSubmitReview} className="space-y-4">
-                <div>
-                  <label className="block text-xs text-slate-300 font-semibold mb-1">Ваше имя *</label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!!currentUser}
-                    value={currentUser ? currentUser.name : newReviewName}
-                    onChange={(e) => setNewReviewName(e.target.value)}
-                    placeholder="Например, Виталий"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors disabled:opacity-50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-slate-300 font-semibold mb-1">Компания / Сфера деятельности</label>
-                  <input
-                    type="text"
-                    disabled={!!currentUser}
-                    value={currentUser ? (currentUser.position || 'Пользователь ИИ Рапорт') : newReviewCompany}
-                    onChange={(e) => setNewReviewCompany(e.target.value)}
-                    placeholder="Например, ООО «ПродОпт»"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors disabled:opacity-50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-slate-300 font-semibold mb-1">Текст отзыва *</label>
-                  <textarea
-                    required
-                    rows={4}
-                    value={newReviewText}
-                    onChange={(e) => setNewReviewText(e.target.value)}
-                    placeholder="Поделитесь вашим впечатлением от использования сервиса ИИ Рапорт..."
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors resize-none"
-                  />
-                </div>
-
-                {isSubmittingReview && (
-                  <div className="p-3 bg-amber-400/10 border border-amber-400/20 text-amber-200 text-xs rounded-xl flex items-center gap-2 animate-pulse">
-                    <Sparkles size={14} className="animate-spin" />
-                    <span>{aiReviewReply}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingReview || (!currentUser && !newReviewName.trim()) || !newReviewText.trim()}
-                  className="w-full py-3 rounded-xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-xs uppercase tracking-wider hover:brightness-110 active:scale-98 disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer font-sans"
+            <AnimatePresence mode="wait">
+              {showComments && reviews[activeReviewIndex] && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full overflow-hidden"
+                  key={`comments-${reviews[activeReviewIndex].id}`}
                 >
-                  Отправить отзыв
-                </button>
-              </form>
-            </motion.div>
+                  <CommentsSection 
+                    entityId={`review-${reviews[activeReviewIndex].id}`} 
+                    entityType="review" 
+                    entityTitle={`Отзыв от ${reviews[activeReviewIndex].name}`} 
+                    currentUser={currentUser} 
+                  />
+                </motion.div>
+              )}
+
+              {showWriteReview && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full overflow-hidden rounded-3xl border border-amber-200/30 bg-gradient-to-b from-[#17344F] to-[#265582] p-8 shadow-2xl relative"
+                  id="review-form-box"
+                  key="write-review-form"
+                >
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/5 to-white/10" />
+                  
+                  {currentUser ? (
+                    <>
+                      <h4 className="text-lg font-bold text-amber-200 mb-1 font-sans">Оставить отзыв как {currentUser.name}</h4>
+                      <p className="text-slate-300 text-xs mb-6">Вы вошли как зарегистрированный пользователь.</p>
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="text-lg font-bold text-white mb-1 font-sans">Оставить анонимный отзыв</h4>
+                      <p className="text-slate-300 text-xs mb-6">Ваше мнение улучшает качество работы нашего ИИ-алгоритма.</p>
+                    </>
+                  )}
+
+                  <form onSubmit={handleSubmitReview} className="space-y-4">
+                    <div>
+                      <label className="block text-xs text-slate-300 font-semibold mb-1">Ваше имя *</label>
+                      <input
+                        type="text"
+                        required
+                        disabled={!!currentUser}
+                        value={currentUser ? currentUser.name : newReviewName}
+                        onChange={(e) => setNewReviewName(e.target.value)}
+                        placeholder="Например, Виталий"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors disabled:opacity-50"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-slate-300 font-semibold mb-1">Компания / Сфера деятельности</label>
+                      <input
+                        type="text"
+                        disabled={!!currentUser}
+                        value={currentUser ? (currentUser.position || 'Пользователь ИИ Рапорт') : newReviewCompany}
+                        onChange={(e) => setNewReviewCompany(e.target.value)}
+                        placeholder="Например, ООО «ПродОпт»"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors disabled:opacity-50"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-slate-300 font-semibold mb-1">Текст отзыва *</label>
+                      <textarea
+                        required
+                        rows={4}
+                        value={newReviewText}
+                        onChange={(e) => setNewReviewText(e.target.value)}
+                        placeholder="Поделитесь вашим впечатлением от использования сервиса ИИ Рапорт..."
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#17344F]/50 border border-white/10 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#E7C768] transition-colors resize-none"
+                      />
+                    </div>
+
+                    {isSubmittingReview && (
+                      <div className="p-3 bg-amber-400/10 border border-amber-400/20 text-amber-200 text-xs rounded-xl flex items-center gap-2 animate-pulse">
+                        <Sparkles size={14} className="animate-spin" />
+                        <span>{aiReviewReply}</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isSubmittingReview || (!currentUser && !newReviewName.trim()) || !newReviewText.trim()}
+                      className="w-full py-3 rounded-xl font-bold bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-xs uppercase tracking-wider hover:brightness-110 active:scale-98 disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer font-sans shimmer-effect"
+                    >
+                      Отправить отзыв
+                    </button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
           </div>
         </div>

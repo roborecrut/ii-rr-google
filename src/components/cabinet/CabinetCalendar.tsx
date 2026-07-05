@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Sparkles, Send, Mic, CheckCircle, ThumbsUp, MessageSquare, AlertTriangle, Plus, Trash, X } from 'lucide-react';
 import { SubmittedReport, UserProfile, UserRole, Department } from '../../types';
+import VoiceEqualizer from '../VoiceEqualizer';
 
 interface CabinetCalendarProps {
   currentUser: UserProfile | null;
@@ -840,9 +841,12 @@ ${Object.entries(selectedReport.answers).map(([k, v]) => `- ${k}: ${v}`).join('\
                                     </div>
 
                                     {isRecording && (
-                                      <span className="text-[9px] text-red-400 font-mono animate-pulse block">
-                                        🎤 Идет симуляция записи голоса... {recordTimer}s
-                                      </span>
+                                      <div className="mt-1.5 space-y-1">
+                                        <VoiceEqualizer isActive={true} />
+                                        <span className="text-xs text-slate-400 font-mono block">
+                                          Продолжительность записи: {recordTimer}s
+                                        </span>
+                                      </div>
                                     )}
 
                                     <div className="flex gap-2">

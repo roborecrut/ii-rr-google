@@ -29,6 +29,90 @@ body {
   overflow-x: hidden;
 }
 
+/* Shimmering Metallic Shine Effect classes */
+.shimmer-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 30%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.35) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  animation: metallic-shine-wave 3.5s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.shimmer-text-effect {
+  background: linear-gradient(
+    90deg,
+    #F4EE8E 0%,
+    #D99E41 20%,
+    #ffffff 45%,
+    #ffffff 55%,
+    #F4EE8E 80%,
+    #D99E41 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shine-wave 5s infinite linear;
+}
+
+@keyframes metallic-shine-wave {
+  0% { left: -150%; }
+  35% { left: 150%; }
+  100% { left: 150%; }
+}
+
+@keyframes text-shine-wave {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Custom animated equalizer keyframe and classes */
+.equalizer-bar {
+  transform-origin: bottom;
+  animation: bounce-equalizer 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes bounce-equalizer {
+  0% { transform: scaleY(0.2); }
+  100% { transform: scaleY(1); }
+}
+
+/* Golden halo animation for the AI assistant icon */
+@keyframes gold-glow-pulse {
+  0% {
+    box-shadow: 0 0 12px rgba(244, 238, 142, 0.35), inset 0 0 4px rgba(244, 238, 142, 0.2);
+    border-color: #E7C768;
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(217, 158, 65, 0.7), inset 0 0 10px rgba(217, 158, 65, 0.4);
+    border-color: #F4EE8E;
+  }
+  100% {
+    box-shadow: 0 0 12px rgba(244, 238, 142, 0.35), inset 0 0 4px rgba(244, 238, 142, 0.2);
+    border-color: #E7C768;
+  }
+}
+
+.animate-gold-glow {
+  animation: gold-glow-pulse 2.5s infinite ease-in-out;
+}
+
 /* Custom styling for all dropdown selects and options to match the dark blue/amber theme */
 select {
   background-color: #17344F !important;

@@ -219,22 +219,24 @@ ${wikiContext}
       {!shouldHideButton && (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center justify-center w-14 h-14 rounded-full border-2 border-[#E7C768] bg-gradient-to-r from-[#17344F] to-[#265582] text-white shadow-[0_8px_25px_rgba(23,52,79,0.5)] hover:scale-115 active:scale-95 transition-all cursor-pointer group relative animate-fade-in"
+          className="flex items-center justify-center w-14 h-14 rounded-full border-2 border-[#E7C768] bg-gradient-to-r from-[#17344F] to-[#265582] text-white shadow-[0_8px_25px_rgba(23,52,79,0.5)] hover:scale-115 active:scale-95 transition-all cursor-pointer group relative animate-fade-in animate-gold-glow"
           id="ai-assistant-toggle-btn"
           title="AI Ассистент"
         >
-          {/* Pulse active status dot in the corner of the round button */}
-          <span className="absolute bottom-0 right-0 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-slate-950"></span>
-          </span>
+          {/* Inner shimmer element to prevent overflow clipping of the badge */}
+          <div className="absolute inset-0 rounded-full shimmer-effect pointer-events-none" />
 
           <img 
             src="https://rjhtauzookkvlipvqpvr.supabase.co/storage/v1/object/public/Logos/RR-Logo.png" 
             alt="RR AI" 
-            className="w-8 h-8 object-contain group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300"
+            className="w-8 h-8 object-contain group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300 relative z-10"
             referrerPolicy="no-referrer"
           />
+
+          {/* "AI" badge on top of logo and outside the circle boundary */}
+          <span className="absolute -bottom-1 -right-1 z-25 flex items-center justify-center bg-gradient-to-r from-[#F4EE8E] to-[#D99E41] text-slate-900 text-[10px] font-black font-mono px-1 rounded-md border-2 border-[#17344F] shadow-[0_2px_8px_rgba(217,158,65,0.4)] h-4.5 min-w-5">
+            AI
+          </span>
         </button>
       )}
 

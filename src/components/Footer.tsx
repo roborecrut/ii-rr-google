@@ -104,16 +104,6 @@ export default function Footer({ onNavigate }: FooterProps) {
 
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500">
-          <p>ИИ Рапорт — революционная система автоматической отчетности и рекомендаций.</p>
-          <div className="flex items-center gap-4 mt-2 sm:mt-0 font-sans">
-            <span className="hover:text-slate-300 cursor-pointer">ii-rr.ru</span>
-            <span className="text-[#F4EE8E] font-semibold">ii-rr.online (основной)</span>
-            <span className="hover:text-slate-300 cursor-pointer">www.ii-rr.online</span>
-          </div>
-        </div>
-
       </div>
     </footer>
   );
